@@ -14,6 +14,7 @@ private:
     //variables necesarias para realizar los efectos:
     uint8_t _mainHue = 0;
     uint16_t _currentPixel = 0; 
+    uint16_t _sequenceIdx = 0;
     unsigned long _lastUpdateTime = millis();
 
 public:
@@ -37,8 +38,12 @@ public:
 
     //Definicion de metodos de efectos automaticos comunes:
     void rainbowEffect(uint8_t colorStep = 1);
-    
+
     void colorWipeEffect(bool randomColor = 1, bool forwardDirection = 1, uint8_t colorStep = 1);
+
+    void theaterChaseEffect(bool forwardDir = 1, bool autoColorChange = 0, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3);
+
+
 
 };
 

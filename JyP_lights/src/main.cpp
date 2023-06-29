@@ -34,11 +34,11 @@ void loop() {
   // lightsManager1.receiveEventsFromBT(BTslave);
 
   // ledStrip1.rainbowEffect(3);
-  ledStrip1.colorWipeEffect(0, 0, 40);
+  // ledStrip1.colorWipeEffect(0, 0, 40);
+  ledStrip1.theaterChaseEffect(0, 1, 50, 5);
 
   //Si esta listo para visualizar de nuevo se visualiza cambios:
   if(ledStrip1.canShow()) ledStrip1.show();
-  
 
   // ledStrip1.fill(ledStrip1.ColorHSV(map(millis() % 256, 0, 255, 0, 65535)));
 // strip.show();
@@ -48,6 +48,6 @@ void loop() {
 
   // ledStrip1.show();
 
-  delay(1);
+  delay(10);
   
 }

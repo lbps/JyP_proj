@@ -66,3 +66,32 @@ void ledStripBase::colorWipeEffect(bool randomColor = 1, bool forwardDirection =
   }
   return;
 }
+
+void ledStripBase::theaterChaseEffect(bool forwardDir = 1, bool autoColorChange = 0, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3){
+
+  //Se apagan todos los led.
+  this->clear();
+
+  //Se pinta 1 un led de cada tres de la tira
+  if(forwardDir){
+    for (int i=(0+(_sequenceIdx%spaceBetweenLeds)); i<this->numPixels(); i+=spaceBetweenLeds){
+      this->setPixelColor(i, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+    }
+  }else{
+    for (int i=((this->numPixels()-1-(_sequenceIdx%spaceBetweenLeds))); i>=0; i-=spaceBetweenLeds){
+      this->setPixelColor(i, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+    }
+  }
+  
+
+  //Se comprueba si hay que cambiar color automaticamente:
+  _sequenceIdx++;
+
+  if(autoColorChange && _sequenceIdx>=numSequencesToChangeColor && _sequenceIdx%spaceBetweenLeds==0){ 
+    _sequenceIdx = 0;
+
+    _mainHue = random(255);
+  };
+  
+  
+}
