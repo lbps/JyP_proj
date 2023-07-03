@@ -67,7 +67,7 @@ void ledStripBase::colorWipeEffect(bool randomColor = 1, bool forwardDirection =
   return;
 }
 
-void ledStripBase::theaterChaseEffect(bool forwardDir = 1, bool autoColorChange = 0, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3){
+void ledStripBase::theaterChaseEffect(bool forwardDir = 1, bool autoColorChange = 0, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1){
 
   //Se apagan todos los led.
   this->clear();
@@ -75,11 +75,18 @@ void ledStripBase::theaterChaseEffect(bool forwardDir = 1, bool autoColorChange 
   //Se pinta 1 un led de cada tres de la tira
   if(forwardDir){
     for (int i=(0+(_sequenceIdx%spaceBetweenLeds)); i<this->numPixels(); i+=spaceBetweenLeds){
-      this->setPixelColor(i, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+      for (int j=0; j<numAdjacentLedsOn; j++){
+        if((i+j)>=numPixels()) break;
+        this->setPixelColor(i+j, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+      }
     }
   }else{
     for (int i=((this->numPixels()-1-(_sequenceIdx%spaceBetweenLeds))); i>=0; i-=spaceBetweenLeds){
       this->setPixelColor(i, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+      for (int j=0; j<numAdjacentLedsOn; j++){
+        if((i-j)<0) break;
+        this->setPixelColor(i-j, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+      }
     }
   }
   
