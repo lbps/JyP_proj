@@ -42,9 +42,9 @@ public:
     void colorWipeEffect(bool randomColor = 1, bool forwardDirection = 1, uint8_t colorStep = 1);
 
     void theaterChaseEffect(bool forwardDir = 1, bool autoColorChange = 0, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1);
-
-
-
+   
+    void theaterChaseRainbowEffect(bool forwardDir = 1, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1);
+    
 };
 
 #endif
