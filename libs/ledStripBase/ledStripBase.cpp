@@ -19,6 +19,46 @@ void ledStripBase::initStrip(uint8_t initialBrightness = 50){
   return;
 }
 
+void ledStripBase::rgbToHsv(uint32_t color, uint16_t& hue, uint8_t& saturation, uint8_t& value) {
+
+  // Obtener los componentes RGB individuales
+  uint8_t red = (color >> 16) & 0xFF;
+  uint8_t green = (color >> 8) & 0xFF;
+  uint8_t blue = color & 0xFF;
+
+  // Convertir a HSV
+  float r = red / 255.0f;
+  float g = green / 255.0f;
+  float b = blue / 255.0f;
+
+  float cmax = fmaxf(r, fmaxf(g, b));
+  float cmin = fminf(r, fminf(g, b));
+  float delta = cmax - cmin;
+
+  // Calculamos el valor (value)
+  value = static_cast<uint8_t>(cmax * 255.0f);
+
+  // Si el valor es cero, la saturación y el matiz son 0
+  if (cmax == 0) {
+    saturation = 0;
+    hue = 0;
+  } else {
+    // Calculamos la saturación (saturation)
+    saturation = static_cast<uint8_t>((delta / cmax) * 255.0f);
+
+    // Calculamos el matiz (hue)
+    if (delta == 0) {
+      hue = 0;
+    } else if (cmax == r) {
+      hue = static_cast<uint16_t>((60.0f * fmodf((g - b) / delta, 6.0f)) * 65535.0f / 360.0f);
+    } else if (cmax == g) {
+      hue = static_cast<uint16_t>((60.0f * ((b - r) / delta + 2.0f)) * 65535.0f / 360.0f);
+    } else {
+      hue = static_cast<uint16_t>((60.0f * ((r - g) / delta + 4.0f)) * 65535.0f / 360.0f);
+    }
+  }
+}
+
 uint8_t ledStripBase::getMainHue(){
   return _mainHue;
 }
@@ -156,4 +196,66 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir = 1, uint16_t numSe
 
   //Se actualiza el numero de secuencia
   _sequenceIdx++;
+}
+
+void ledStripBase::fadeDarkAll(uint8_t fadeStep = 1){
+  uint32_t prevPixelValue;
+  uint32_t newPixelValue;
+  for(int i=0;i<(this->numPixels()); i++){
+    prevPixelValue= this->getPixelColor(i);
+
+    
+    //Se obtienen los valores HSV:
+    uint16_t H;
+    uint8_t S;
+    uint8_t V;
+    this->rgbToHsv(prevPixelValue, H, S, V);
+
+    //Se reduce el canal V:
+    if(V>(fadeStep)){
+      V-=fadeStep;
+    }else{
+      V = 0;
+    }
+    newPixelValue = this->ColorHSV(H,S,V);
+
+    //se actualizan los valores de cada canal:
+    this->setPixelColor(i, newPixelValue);
+
+
+    // OTRA OPCION ACTUANDO DIRECTAMENTE SOBRE CANALES RGB (mas rapido pero cambia de color al tender a 0)
+    // // Obtener los componentes RGB individuales
+    // int red = (prevPixelValue >> 16) & 0xFF;
+    // int green = (prevPixelValue >> 8) & 0xFF;
+    // int blue = prevPixelValue & 0xFF;
+    
+    // //Se reducen sus valores:
+    // if(red>(fadeStep)){
+    //   red-=fadeStep;
+    // }else{
+    //   red = 0;
+    // }
+    // if(green>(fadeStep)){
+    //   green-=fadeStep;
+    // }else{
+    //   green = 0;
+    // }
+    // if(blue>(fadeStep)){
+    //   blue-=fadeStep;
+    // }else{
+    //   blue = 0;
+    // }
+    
+    // //se actualizan los valores de cada canal:
+    // this->setPixelColor(i, this->Color(uint8_t(red), uint8_t(green), uint8_t(blue)));
+  }
+}
+
+void ledStripBase::flashEffect(uint32_t color, bool newFlash, uint8_t fadeStep = 200){
+  if(newFlash){
+    this->fill(color);
+  }else{
+    this->fadeDarkAll(fadeStep);
+  }
+  return;
 }
