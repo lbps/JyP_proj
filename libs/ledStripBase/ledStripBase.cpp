@@ -9,7 +9,7 @@ ledStripBase::ledStripBase (uint16_t numLeds, uint8_t dataPin):
 ledStripBase::~ledStripBase(){
 }
 
-void ledStripBase::initStrip(uint8_t initialBrightness = 50){
+void ledStripBase::initStrip(uint8_t initialBrightness){
   if(initialBrightness<0) initialBrightness=0;
   if(initialBrightness>100) initialBrightness=100;
   this->begin();
@@ -68,7 +68,7 @@ uint8_t ledStripBase::getMainHue(){
   return;
 }
 
-void ledStripBase::rainbowEffect(uint8_t colorStep = 1) {
+void ledStripBase::rainbowEffect(uint8_t colorStep) {
   this->rainbow(map(_mainHue, 0, 255, 0, 65535));
   if(colorStep<1) colorStep=1;
   if(colorStep>10) colorStep=10;
@@ -76,7 +76,7 @@ void ledStripBase::rainbowEffect(uint8_t colorStep = 1) {
   return;
 }
 
-void ledStripBase::colorWipeEffect(bool randomColor = 1, bool forwardDirection = 1, uint8_t colorStep = 1){
+void ledStripBase::colorWipeEffect(bool randomColor, bool forwardDirection, uint8_t colorStep){
 
   //Se comprueba si hay que actualizar color:
   if(_currentPixel>=(this->numPixels()-1)){
@@ -107,7 +107,7 @@ void ledStripBase::colorWipeEffect(bool randomColor = 1, bool forwardDirection =
   return;
 }
 
-void ledStripBase::theaterChaseEffect(bool forwardDir = 1, bool autoColorChange = 0, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1){
+void ledStripBase::theaterChaseEffect(bool forwardDir, bool autoColorChange, uint16_t numSequencesToChangeColor, uint16_t spaceBetweenLeds, uint16_t numAdjacentLedsOn){
 
   //Se apagan todos los led.
   this->clear();
@@ -143,7 +143,7 @@ void ledStripBase::theaterChaseEffect(bool forwardDir = 1, bool autoColorChange 
   return;
 }
 
-void ledStripBase::theaterChaseRainbowEffect(bool forwardDir = 1, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1){
+void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequencesToChangeColor, uint16_t spaceBetweenLeds, uint16_t numAdjacentLedsOn){
   //Se apagan todos los led.
   this->clear();
 
@@ -198,7 +198,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir = 1, uint16_t numSe
   _sequenceIdx++;
 }
 
-void ledStripBase::fadeDarkAll(uint8_t fadeStep = 1){
+void ledStripBase::fadeDarkAll(uint8_t fadeStep){
   uint32_t prevPixelValue;
   uint32_t newPixelValue;
   for(int i=0;i<(this->numPixels()); i++){
@@ -251,7 +251,7 @@ void ledStripBase::fadeDarkAll(uint8_t fadeStep = 1){
   }
 }
 
-void ledStripBase::flashEffect(uint32_t color, bool newFlash, uint8_t fadeStep = 200){
+void ledStripBase::flashEffect(uint32_t color, bool newFlash, uint8_t fadeStep){
   if(newFlash){
     this->fill(color);
   }else{

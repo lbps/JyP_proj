@@ -1,18 +1,18 @@
 #include <Arduino.h>
-#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
 
 // #include "BTHC.h"
 // #include "lightsManager.h"
 // #include "ringLED.h"
 #include "ledStripBase.h"
 
-#pragma GCC diagnostic ignored "-pedantic"
+// #pragma GCC diagnostic ignored "-pedantic"
 
 // SoftwareSerial SerialSlave(8,9);
 // BTHC BTslave(&SerialSlave);
 // lightsManager lightsManager1;
 
-ledStripBase ledStrip1 = ledStripBase(110, 6);
+ledStripBase ledStrip1 = ledStripBase(110, 25);
 // Adafruit_NeoPixel strip = Adafruit_NeoPixel(110, 6, NEO_GRB + NEO_KHZ800);
 
 void setup() {
@@ -40,7 +40,7 @@ void loop() {
 
   unsigned long t2 = millis();
   bool newFlash;
-  if((t2-t1)>=2000){
+  if((t2-t1)>=1000){
     newFlash = 1; 
     t1=t2;
     ledStrip1.setMainHue(ledStrip1.getMainHue()+10);
@@ -48,7 +48,7 @@ void loop() {
     newFlash=0;
   }
 
-  ledStrip1.flashEffect(ledStrip1.ColorHSV(map(random(0,255), 0, 255, 0, 65535)), newFlash, 1);
+  ledStrip1.flashEffect(ledStrip1.ColorHSV(map(random(0,255), 0, 255, 0, 65535)), newFlash, 10);
 
   //Si esta listo para visualizar de nuevo se visualiza cambios:
   if(ledStrip1.canShow()) ledStrip1.show();
@@ -61,6 +61,6 @@ void loop() {
 
   // ledStrip1.show();
 
-  // delay();
+  delay(10);
   
 }

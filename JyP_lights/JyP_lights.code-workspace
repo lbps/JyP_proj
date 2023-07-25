@@ -3,6 +3,10 @@
 		{
 			"name": "JyP_lights",
 			"path": "."
+		},
+		{
+			"name": "pruebaESP32",
+			"path": "../../pruebaESP32"
 		}
 	],
 	"settings": {}
