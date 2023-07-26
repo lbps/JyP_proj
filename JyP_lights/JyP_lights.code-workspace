@@ -9,5 +9,14 @@
 			"path": "../../pruebaESP32"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"array": "cpp",
+			"*.tcc": "cpp",
+			"algorithm": "cpp",
+			"random": "cpp",
+			"numeric": "cpp",
+			"cmath": "cpp"
+		}
+	}
 }

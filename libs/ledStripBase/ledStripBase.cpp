@@ -9,6 +9,14 @@ ledStripBase::ledStripBase (uint16_t numLeds, uint8_t dataPin):
 ledStripBase::~ledStripBase(){
 }
 
+uint16_t ledStripBase::map8to16bit(uint8_t in){
+  return map(in, 0, 65535, 0, 255);
+};
+
+uint8_t ledStripBase::map16to8bit(uint16_t in){
+  return map(in, 0, 255, 0, 65535);
+};
+
 void ledStripBase::initStrip(uint8_t initialBrightness){
   if(initialBrightness<0) initialBrightness=0;
   if(initialBrightness>100) initialBrightness=100;
@@ -69,7 +77,7 @@ uint8_t ledStripBase::getMainHue(){
 }
 
 void ledStripBase::rainbowEffect(uint8_t colorStep) {
-  this->rainbow(map(_mainHue, 0, 255, 0, 65535));
+  this->rainbow(map8to16bit(_mainHue));
   if(colorStep<1) colorStep=1;
   if(colorStep>10) colorStep=10;
   _mainHue+=colorStep;
@@ -88,7 +96,7 @@ void ledStripBase::colorWipeEffect(bool randomColor, bool forwardDirection, uint
   }
 
   //se actualiza valor del pixel actual:
-  this->setPixelColor(_currentPixel, this->ColorHSV(map(_mainHue, 0, 255, 0, 65535)));
+  this->setPixelColor(_currentPixel, this->ColorHSV(map8to16bit(_mainHue)));
 
   //Se actualiza el pixel actual:
   if(forwardDirection){
@@ -117,15 +125,15 @@ void ledStripBase::theaterChaseEffect(bool forwardDir, bool autoColorChange, uin
     for (int i=(0+(_sequenceIdx%spaceBetweenLeds)); i<this->numPixels(); i+=spaceBetweenLeds){
       for (int j=0; j<numAdjacentLedsOn; j++){
         if((i+j)>=numPixels()) break;
-        this->setPixelColor(i+j, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+        this->setPixelColor(i+j, this->ColorHSV(map8to16bit(_mainHue)));
       }
     }
   }else{
     for (int i=((this->numPixels()-1-(_sequenceIdx%spaceBetweenLeds))); i>=0; i-=spaceBetweenLeds){
-      this->setPixelColor(i, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+      this->setPixelColor(i, this->ColorHSV(map8to16bit(_mainHue)));
       for (int j=0; j<numAdjacentLedsOn; j++){
         if((i-j)<0) break;
-        this->setPixelColor(i-j, this->ColorHSV(map(_mainHue,0, 255, 0, 65535)));
+        this->setPixelColor(i-j, this->ColorHSV(map8to16bit(_mainHue)));
       }
     }
   }
@@ -168,7 +176,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
         uint32_t pixelHue = _mainHue + (i+j)*deltaHue; 
         if(pixelHue>255) pixelHue=256-pixelHue;
 
-        this->setPixelColor(i+j, this->ColorHSV(map(pixelHue,0, 256, 0, 65535)));
+        this->setPixelColor(i+j, this->ColorHSV(map8to16bit(_mainHue)));
       }
     }
   }else{
@@ -189,13 +197,54 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
         uint32_t pixelHue = _mainHue + (i+j)*deltaHue; 
         if(pixelHue>255) pixelHue=256-pixelHue;
         
-        this->setPixelColor(i-j, this->ColorHSV(map(pixelHue,0, 256, 0, 65535)));
+        this->setPixelColor(i-j, this->ColorHSV(map8to16bit(_mainHue)));
       }
     }
   }
 
   //Se actualiza el numero de secuencia
   _sequenceIdx++;
+}
+
+void ledStripBase::sparkleEffect(uint16_t numLedsOn){
+  this->clear();
+
+  uint32_t color = this->ColorHSV(map8to16bit(_mainHue));
+  uint16_t pixel;
+
+  for(uint16_t i = 0; i<numLedsOn; i++){
+    pixel = random(this->numPixels());
+    this->setPixelColor(pixel, color);
+  };
+  return;
+}
+
+void ledStripBase::runningLightsEffect(bool forwardDirection){
+  uint32_t mainColor = this->ColorHSV(this->_mainHue);
+  int R = (mainColor >> 16) & 0xFF;
+  int G = (mainColor >> 8) & 0xFF;
+  int B = mainColor & 0xFF;
+  float levelScale;
+  for(int i=0; i<this->numPixels(); i++) {
+    levelScale = (sin(i+_sequenceIdx) * 127.0 + 128.0)/255.0;
+    this->setPixelColor(i , uint8_t(R*levelScale), uint8_t(G*levelScale), uint8_t(B*levelScale));
+  }
+  
+  if(forwardDirection){
+    _sequenceIdx--;
+
+    if(_sequenceIdx<0){
+      _sequenceIdx=this->numPixels();
+    }
+  }else{
+    _sequenceIdx++;
+
+    if(_sequenceIdx>(this->numPixels()*2)){
+      _sequenceIdx=0;
+    }
+  }
+
+  return;
 }
 
 void ledStripBase::fadeDarkAll(uint8_t fadeStep){

@@ -31,15 +31,19 @@ public:
     //setters:
     void setMainHue (uint8_t mainHue);
 
+    //utils:
+    uint16_t map8to16bit(uint8_t in);
+    uint8_t map16to8bit(uint16_t in);
+
     //Metodo para inicializar la tira con todos leds apagados:
     void initStrip(uint8_t initialBrightness = 50);
 
     //Metado para transformar de RGB a HSV:
     void rgbToHsv(uint32_t color, uint16_t& hue, uint8_t& saturation, uint8_t& value) ;
-    
+
     //Metodos apra cambiar entre efectos automaticos
 
-    //Definicion de metodos de efectos automaticos comunes:
+    //Definicion de metodos de efectos:
     void rainbowEffect(uint8_t colorStep = 1);
 
     void colorWipeEffect(bool randomColor = 1, bool forwardDirection = 1, uint8_t colorStep = 1);
@@ -48,11 +52,13 @@ public:
    
     void theaterChaseRainbowEffect(bool forwardDir = 1, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1);
     
-    //Definicion de metodos de interaccion control:
+    void sparkleEffect(uint16_t numLedsOn = 1); 
+
+    void runningLightsEffect(bool forwardDirection = 1);
+
     void fadeDarkAll(uint8_t fadeStep = 1);
 
     void flashEffect(uint32_t color, bool newFlash, uint8_t fadeStep = 200); 
-
 };
 
 #endif
