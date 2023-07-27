@@ -315,7 +315,7 @@ void ledStripBase::flashEffect(bool newFlash, uint8_t fadeSpeed){
   return;
 }
 
-void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection){
+void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection, bool meteorTrailEffect){
 
   //Se inicializa el effecto:
   if(_firstEffectSequence){
@@ -330,8 +330,16 @@ void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardD
 
   //Se oscurecen todos los pixels para crear estela
   uint8_t fadeStep=255/lightTrailSize;
-  this->fadeDarkAll(fadeStep);
-
+  if(!meteorTrailEffect){
+    this->fadeDarkAll(fadeStep);
+  }else{
+    for(int i=0;i<(this->numPixels()); i++){
+      if(random(10)>3){
+        this->fadeDarkPixel(i, uint8_t(fadeStep/1.5));
+      }
+    }
+  }
+  
   //Secuencias pares se va pasando el pixel principal adelante hasta llegar al final y pasar de secuencia:
   if(_sequenceIdx%2==0){
     if(_currentPixel<this->numPixels()){
@@ -354,7 +362,7 @@ void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardD
 
 }
 
-void ledStripBase::newKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection){
+void ledStripBase::newKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection, bool meteorTrailEffect){
 
   //Se inicializa el effecto:
   if(_firstEffectSequence){
@@ -369,7 +377,15 @@ void ledStripBase::newKITTeffect(uint16_t lightTrailSize, bool initialForwardDir
 
   //Se oscurecen todos los pixels para crear estela
   uint8_t fadeStep=255/lightTrailSize;
-  this->fadeDarkAll(fadeStep);
+  if(!meteorTrailEffect){
+    this->fadeDarkAll(fadeStep);
+  }else{
+    for(int i=0;i<(this->numPixels()); i++){
+      if(random(10)>3){
+        this->fadeDarkPixel(i, uint8_t(fadeStep/1.5));
+      }
+    }
+  }
 
   //Secuencias pares se va pasando el pixel principal adelante hasta llegar al final y pasar de secuencia:
   if(_sequenceIdx%2==0){

@@ -50,8 +50,8 @@ void loop() {
 
   // ledStrip1.flashEffect(newFlash, 1);
   // ledStrip1.runningLightsEffect(0);
-  // ledStrip1.basicKITTeffect(40, 0);
-  ledStrip1.newKITTeffect(10, 0);
+  // ledStrip1.basicKITTeffect(4, 0, 1);
+  ledStrip1.newKITTeffect(10, 0, 1);
 
   //Si esta listo para visualizar de nuevo se visualiza cambios:
   if(ledStrip1.canShow()) ledStrip1.show();
@@ -64,6 +64,6 @@ void loop() {
 
   // ledStrip1.show();
 
-  delay(10);
+  delay(50);
   
 }

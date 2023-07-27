@@ -63,9 +63,9 @@ public:
 
     void flashEffect(bool newFlash, uint8_t fadeSpeed = 80); 
 
-    void basicKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1);
+    void basicKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1, bool meteorTrailEffect = 0);
 
-    void newKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1);
+    void newKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1, bool meteorTrailEffect = 0);
 };
 
 #endif
