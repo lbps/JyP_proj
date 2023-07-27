@@ -15,6 +15,7 @@ private:
     uint8_t _mainHue = 0;
     uint16_t _currentPixel = 0; 
     uint16_t _sequenceIdx = 0;
+    bool _firstEffectSequence = 1;
     unsigned long _lastUpdateTime = millis();
 
 public:
@@ -56,9 +57,15 @@ public:
 
     void runningLightsEffect(bool forwardDirection = 1);
 
+    void fadeDarkPixel(uint16_t pixelIdx, uint8_t fadeStep=1);
+
     void fadeDarkAll(uint8_t fadeStep = 1);
 
-    void flashEffect(uint32_t color, bool newFlash, uint8_t fadeStep = 200); 
+    void flashEffect(bool newFlash, uint8_t fadeSpeed = 80); 
+
+    void basicKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1);
+
+    void newKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1);
 };
 
 #endif

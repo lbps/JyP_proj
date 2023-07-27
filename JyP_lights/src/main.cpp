@@ -25,7 +25,7 @@ void setup() {
 
     Serial.println("Inicio programa...");
 
-    ledStrip1.initStrip(50);
+    ledStrip1.initStrip(100);
 }
 
 unsigned long t1 = millis();
@@ -48,8 +48,10 @@ void loop() {
   //   newFlash=0;
   // }
 
-  // ledStrip1.flashEffect(ledStrip1.ColorHSV(map(random(0,255), 0, 255, 0, 65535)), newFlash, 10);
-  ledStrip1.runningLightsEffect(0);
+  // ledStrip1.flashEffect(newFlash, 1);
+  // ledStrip1.runningLightsEffect(0);
+  // ledStrip1.basicKITTeffect(40, 0);
+  ledStrip1.newKITTeffect(10, 0);
 
   //Si esta listo para visualizar de nuevo se visualiza cambios:
   if(ledStrip1.canShow()) ledStrip1.show();
@@ -62,6 +64,6 @@ void loop() {
 
   // ledStrip1.show();
 
-  delay(100);
+  delay(10);
   
 }

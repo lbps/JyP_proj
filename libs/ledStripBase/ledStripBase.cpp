@@ -10,11 +10,11 @@ ledStripBase::~ledStripBase(){
 }
 
 uint16_t ledStripBase::map8to16bit(uint8_t in){
-  return map(in, 0, 65535, 0, 255);
+  return map(in, 0, 255, 0, 65535);
 };
 
 uint8_t ledStripBase::map16to8bit(uint16_t in){
-  return map(in, 0, 255, 0, 65535);
+  return map(in, 0, 65535, 0, 255);
 };
 
 void ledStripBase::initStrip(uint8_t initialBrightness){
@@ -247,29 +247,27 @@ void ledStripBase::runningLightsEffect(bool forwardDirection){
   return;
 }
 
-void ledStripBase::fadeDarkAll(uint8_t fadeStep){
-  uint32_t prevPixelValue;
-  uint32_t newPixelValue;
-  for(int i=0;i<(this->numPixels()); i++){
-    prevPixelValue= this->getPixelColor(i);
+void ledStripBase::fadeDarkPixel(uint16_t pixelIdx, uint8_t fadeStep){
 
-    
-    //Se obtienen los valores HSV:
-    uint16_t H;
-    uint8_t S;
-    uint8_t V;
-    this->rgbToHsv(prevPixelValue, H, S, V);
+  //Se lee el valor anterior del pixel:
+  uint32_t prevPixelValue = this->getPixelColor(pixelIdx);
 
-    //Se reduce el canal V:
-    if(V>(fadeStep)){
-      V-=fadeStep;
-    }else{
-      V = 0;
-    }
-    newPixelValue = this->ColorHSV(H,S,V);
+  //Se obtienen los valores HSV:
+  uint16_t H;
+  uint8_t S;
+  uint8_t V;
+  this->rgbToHsv(prevPixelValue, H, S, V);
 
-    //se actualizan los valores de cada canal:
-    this->setPixelColor(i, newPixelValue);
+  //Se reduce el canal V:
+  if(V>(fadeStep)){
+    V-=fadeStep;
+  }else{
+    V = 0;
+  }
+  uint32_t newPixelValue = this->ColorHSV(H,S,V);
+
+  //se actualizan los valores de cada canal:
+  this->setPixelColor(pixelIdx, newPixelValue);
 
 
     // OTRA OPCION ACTUANDO DIRECTAMENTE SOBRE CANALES RGB (mas rapido pero cambia de color al tender a 0)
@@ -296,15 +294,102 @@ void ledStripBase::fadeDarkAll(uint8_t fadeStep){
     // }
     
     // //se actualizan los valores de cada canal:
-    // this->setPixelColor(i, this->Color(uint8_t(red), uint8_t(green), uint8_t(blue)));
+    // this->setPixelColor(pixelIdx, this->Color(uint8_t(red), uint8_t(green), uint8_t(blue)));
+
+}
+
+void ledStripBase::fadeDarkAll(uint8_t fadeStep){
+  for(int i=0;i<(this->numPixels()); i++){
+    this->fadeDarkPixel(i, fadeStep);
   }
 }
 
-void ledStripBase::flashEffect(uint32_t color, bool newFlash, uint8_t fadeStep){
+void ledStripBase::flashEffect(bool newFlash, uint8_t fadeSpeed){
+
+  uint8_t fadeStep = (fadeSpeed/100.0)*255;
   if(newFlash){
-    this->fill(color);
+    this->fill(this->ColorHSV(map8to16bit(_mainHue)));
   }else{
     this->fadeDarkAll(fadeStep);
   }
   return;
+}
+
+void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection){
+
+  //Se inicializa el effecto:
+  if(_firstEffectSequence){
+    _sequenceIdx=0;
+    if(initialForwardDirection){
+      _currentPixel=0;
+    }else{
+      _currentPixel=this->numPixels()-1;
+    }
+    _firstEffectSequence=0;
+  }
+
+  //Se oscurecen todos los pixels para crear estela
+  uint8_t fadeStep=255/lightTrailSize;
+  this->fadeDarkAll(fadeStep);
+
+  //Secuencias pares se va pasando el pixel principal adelante hasta llegar al final y pasar de secuencia:
+  if(_sequenceIdx%2==0){
+    if(_currentPixel<this->numPixels()){
+      _currentPixel++;
+    }else{
+      _sequenceIdx++;
+    };
+
+  //Secuencias impares se va pasando el pixel principal atras hasta llegar al final y pasar de secuencia:
+  }else{
+    if(_currentPixel>0){
+      _currentPixel--;
+    }else{
+      _sequenceIdx++;
+    };
+  }
+
+  //Se enciende a maxima intensidad el pixel principal:
+  this->setPixelColor(_currentPixel, this->ColorHSV(this->map8to16bit(_mainHue)));
+
+}
+
+void ledStripBase::newKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection){
+
+  //Se inicializa el effecto:
+  if(_firstEffectSequence){
+    _sequenceIdx=0;
+    if(initialForwardDirection){
+      _currentPixel=0;
+    }else{
+      _currentPixel=uint8_t((this->numPixels()-1)/2);
+    }
+    _firstEffectSequence=0;
+  }
+
+  //Se oscurecen todos los pixels para crear estela
+  uint8_t fadeStep=255/lightTrailSize;
+  this->fadeDarkAll(fadeStep);
+
+  //Secuencias pares se va pasando el pixel principal adelante hasta llegar al final y pasar de secuencia:
+  if(_sequenceIdx%2==0){
+    if(_currentPixel<this->numPixels()){
+      _currentPixel++;
+    }else{
+      _sequenceIdx++;
+    };
+
+  //Secuencias impares se va pasando el pixel principal atras hasta llegar al final y pasar de secuencia:
+  }else{
+    if(_currentPixel>0){
+      _currentPixel--;
+    }else{
+      _sequenceIdx++;
+    };
+  }
+
+  //Se enciende a maxima intensidad el pixel principal y el espejo:
+  uint16_t mirrorPixel=(this->numPixels()-1)-_currentPixel;
+  this->setPixelColor(_currentPixel, this->ColorHSV(this->map8to16bit(_mainHue)));
+  this->setPixelColor(mirrorPixel, this->ColorHSV(this->map8to16bit(_mainHue)));
 }
