@@ -1,77 +1,66 @@
 #include <Arduino.h>
-// #include <SoftwareSerial.h>
-
-// #include "BTHC.h"
-// #include "lightsManager.h"
 #include "ringLED.h"
-// #include "ledStripBase.h"
+#include "ledStripBase.h"
+#include "ESP32BTSerial.h"
+#include "stateMachine.h"
 
-// #pragma GCC diagnostic ignored "-pedantic"
+//INICIALIAZCION DE MODULO BLUETOOTH
+ESP32BTSerial SerialBT;
 
-// SoftwareSerial SerialSlave(8,9);
-// BTHC BTslave(&SerialSlave);
-// lightsManager lightsManager1;
+//INICIALIZACION DE TIRAS LED:
+ringLED ringE = ringLED(110, 25);
+ringLED ringI = ringLED(80, 26);
+ledStripBase letterLED_J = ledStripBase(16, 27);
+ledStripBase letterLED_Y = ledStripBase(6, 28);
+ledStripBase letterLED_P = ledStripBase(17, 29);
 
-// ledStripBase ledStrip1 = ledStripBase(110, 25);
-ringLED ledStrip1 = ringLED(110, 25);
+//CREACION DE OBJETOS PARA ALMACENAR MAQUINAS DE ESTADO. 
+
+
 void setup() {
-   Serial.begin(9600);
 
   //Se confiugra el BTslave.
-    // SerialSlave.begin(38400); 
-    // BTslave.configureBTslave(0, "BTslave", "1234", "38400");
-    // Serial.println("Inicio escucha...");
+  // SerialBT.setPin("1234");
+  SerialBT.begin("JyP_lights");
 
-    Serial.println("Inicio programa...");
+  //Se inicializan todas las tiras LED.
+  ringE.initStrip(100);
+  ringI.initStrip(100);
+  letterLED_J.initStrip(100);
+  letterLED_Y.initStrip(100);
+  letterLED_P.initStrip(100);
 
-    ledStrip1.initStrip(100);
+  //DEBUG: Se inicializa Serial para logs
+  Serial.begin(9600);
+
+  //DEBUG: Se saca log de inicion de programa:
+  Serial.println("Inicio programa...");
 }
 
-unsigned long t1 = millis();
+unsigned long t_start = millis();
 
 void loop() {
-  // lightsManager1.receiveEventsFromBT(BTslave);
-
-  // ledStrip1.rainbowEffect(3);
-  // ledStrip1.colorWipeEffect(0, 0, 40);
-  // ledStrip1.theaterChaseEffect(1, 1, 50, 55, 10);
-  // ledStrip1.theaterChaseRainbowEffect(1, 1, 10, 5);
 
 
-  ledStrip1.updatePreviousPixel();
 
-  unsigned long t2 = millis();
-  bool newFlash;
-  if((t2-t1)>=10){
-    newFlash = 1; 
-    t1=t2;
-    ledStrip1.setMainHue(ledStrip1.getMainHue()+10);
+  //Recopilacion de nuevos eventos:
 
-      //Se actualiza el pixel actual
-    int16_t newCurrentPixel = ledStrip1.mapPixelIdxToRingStrip(ledStrip1.getCurrentPixel()+1);
-    ledStrip1.setCurrentPixel(newCurrentPixel);
+  //Actualizacion de maquinas de estado:
 
-  }else{
-    newFlash=0;
-  }
+  //Actualizacion de valor de pixel anterior de cada tira:
+  ringE.updatePreviousPixel();
+  ringI.updatePreviousPixel();
+  letterLED_J.updatePreviousPixel();
+  letterLED_Y.updatePreviousPixel();
+  letterLED_P.updatePreviousPixel();
 
-    ledStrip1.followCurrentPixel(200);
+  //Actualizacion y ejecucion de efecto seleccionado:
 
-  // ledStrip1.flashEffect(newFlash, 1);
-  // ledStrip1.runningLightsEffect(0);
-  // ledStrip1.basicKITTeffect(20, 0, 1);
-  // ledStrip1.newKITTeffect(10, 0, 1);
+  //Actualizacion de visualizacion de cada tira:
+  ringE.updateDisplay();
+  ringI.updateDisplay();
+  letterLED_J.updateDisplay();
+  letterLED_Y.updateDisplay();
+  letterLED_P.updateDisplay();
 
-  // ledStrip1.fill(ledStrip1.ColorHSV(map(millis() % 256, 0, 255, 0, 65535)));
-// strip.show();
-  // ledStrip1.clear();
-  // ledStrip1.show();
-  // ledStrip1.rainbowEffect();
-
-  // ledStrip1.show();
-
-  ledStrip1.updateDisplay();
-
-  delay(10);
-  
 }

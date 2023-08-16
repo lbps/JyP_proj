@@ -16,7 +16,14 @@
 			"algorithm": "cpp",
 			"random": "cpp",
 			"numeric": "cpp",
-			"cmath": "cpp"
+			"cmath": "cpp",
+			"deque": "cpp",
+			"string": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"vector": "cpp",
+			"string_view": "cpp",
+			"memory": "cpp"
 		}
 	}
 }
