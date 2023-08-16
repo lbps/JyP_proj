@@ -3,8 +3,8 @@
 
 // #include "BTHC.h"
 // #include "lightsManager.h"
-// #include "ringLED.h"
-#include "ledStripBase.h"
+#include "ringLED.h"
+// #include "ledStripBase.h"
 
 // #pragma GCC diagnostic ignored "-pedantic"
 
@@ -12,9 +12,8 @@
 // BTHC BTslave(&SerialSlave);
 // lightsManager lightsManager1;
 
-ledStripBase ledStrip1 = ledStripBase(110, 25);
-// Adafruit_NeoPixel strip = Adafruit_NeoPixel(110, 6, NEO_GRB + NEO_KHZ800);
-
+// ledStripBase ledStrip1 = ledStripBase(110, 25);
+ringLED ledStrip1 = ringLED(110, 25);
 void setup() {
    Serial.begin(9600);
 
@@ -38,23 +37,30 @@ void loop() {
   // ledStrip1.theaterChaseEffect(1, 1, 50, 55, 10);
   // ledStrip1.theaterChaseRainbowEffect(1, 1, 10, 5);
 
-  // unsigned long t2 = millis();
-  // bool newFlash;
-  // if((t2-t1)>=1000){
-  //   newFlash = 1; 
-  //   t1=t2;
-  //   ledStrip1.setMainHue(ledStrip1.getMainHue()+10);
-  // }else{
-  //   newFlash=0;
-  // }
+
+  ledStrip1.updatePreviousPixel();
+
+  unsigned long t2 = millis();
+  bool newFlash;
+  if((t2-t1)>=10){
+    newFlash = 1; 
+    t1=t2;
+    ledStrip1.setMainHue(ledStrip1.getMainHue()+10);
+
+      //Se actualiza el pixel actual
+    int16_t newCurrentPixel = ledStrip1.mapPixelIdxToRingStrip(ledStrip1.getCurrentPixel()+1);
+    ledStrip1.setCurrentPixel(newCurrentPixel);
+
+  }else{
+    newFlash=0;
+  }
+
+    ledStrip1.followCurrentPixel(200);
 
   // ledStrip1.flashEffect(newFlash, 1);
   // ledStrip1.runningLightsEffect(0);
-  // ledStrip1.basicKITTeffect(4, 0, 1);
-  ledStrip1.newKITTeffect(10, 0, 1);
-
-  //Si esta listo para visualizar de nuevo se visualiza cambios:
-  if(ledStrip1.canShow()) ledStrip1.show();
+  // ledStrip1.basicKITTeffect(20, 0, 1);
+  // ledStrip1.newKITTeffect(10, 0, 1);
 
   // ledStrip1.fill(ledStrip1.ColorHSV(map(millis() % 256, 0, 255, 0, 65535)));
 // strip.show();
@@ -64,6 +70,8 @@ void loop() {
 
   // ledStrip1.show();
 
-  delay(50);
+  ledStrip1.updateDisplay();
+
+  delay(10);
   
 }

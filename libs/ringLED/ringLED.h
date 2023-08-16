@@ -6,24 +6,20 @@
 
 #include "ledStripBase.h"
 
-class ringLED: ledStripBase
+class ringLED: public ledStripBase
 {
 private:
-    String _visList [6] = {"rainbow"};
+
 public:
 
     //Constructor:
-    ringLED (uint8_t numLeds, uint8_t dataPin, uint8_t mainHue);
+    ringLED (uint8_t numLeds, uint8_t dataPin);
         
     //Destructor:
     ~ringLED();
 
-    //Metodos Efectos automaticos:
-    void rainbow() ;
-
-    //Efectos JyP interaccion con control:
-    // void ringWheel(uint8_t ledIdx, uint8_t fadeToBlackPercent);
-    // void ringFlash(bool newFlash, CRGB rgbFlash, uint8_t fadeToBlackPercent);
+    //Metodos Efectos:
+    void followCurrentPixel(uint16_t lightTrailSize = 20);
 };
 
 
