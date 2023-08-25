@@ -14,13 +14,12 @@ private:
 
     //variables necesarias para realizar los efectos:
     uint8_t _mainHue = 0;
+    uint8_t _mainSat = 255;
     uint16_t _currentPixel = 0;
     uint16_t _prevPixel = 0;
     uint16_t _sequenceIdx = 0;
     bool _firstEffectSequence = 1;
     unsigned long _lastUpdateTime = millis();
-
-    // StaticJsonDocument<200> doc(); 
 
 public:
 
@@ -32,6 +31,7 @@ public:
 
     //getters:
     uint8_t getMainHue ();
+    uint8_t getMainSat ();
     uint16_t getCurrentPixel();
     uint16_t getPrevPixel();
     uint16_t getSequenceIdx();
@@ -39,6 +39,7 @@ public:
 
     //setters:
     void setMainHue (uint8_t mainHue);
+    void setMainSat (uint8_t mainSat);
     void setCurrentPixel(uint16_t newCurrentPixel);
     void setSequenceIdx(uint16_t newSequenceIdx);
 
@@ -49,7 +50,7 @@ public:
     void rgbToHsv(uint32_t color, uint16_t& hue, uint8_t& saturation, uint8_t& value);
 
     //Metodo para inicializar la tira con todos leds apagados:
-    void initStrip(uint8_t initialBrightness = 50);
+    void initStrip(uint8_t initialBrightness = 100);
 
     //Metodo para actualizar pixel previo:
     void updatePreviousPixel();
@@ -58,6 +59,12 @@ public:
     void updateDisplay();
 
     //Definicion de metodos de efectos:
+    void fadeDarkPixel(uint16_t pixelIdx, uint8_t fadeStep=1);
+
+    void fadeDarkAll(uint8_t fadeStep = 1);
+
+    void flashEffect(bool newFlash, uint8_t fadeSpeed = 80); 
+
     void rainbowEffect(uint8_t colorStep = 1);
 
     void colorWipeEffect(bool randomColor = 1, bool forwardDirection = 1, uint8_t colorStep = 1);
@@ -69,12 +76,6 @@ public:
     void sparkleEffect(uint16_t numLedsOn = 1); 
 
     void runningLightsEffect(bool forwardDirection = 1);
-
-    void fadeDarkPixel(uint16_t pixelIdx, uint8_t fadeStep=1);
-
-    void fadeDarkAll(uint8_t fadeStep = 1);
-
-    void flashEffect(bool newFlash, uint8_t fadeSpeed = 80); 
 
     void basicKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1, bool meteorTrailEffect = 0);
 

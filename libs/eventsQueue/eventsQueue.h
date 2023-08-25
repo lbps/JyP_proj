@@ -12,10 +12,8 @@ public:
     eventsQueue (unsigned int maxItemsInQueue);
     uint8_t getNumEvents ();
     bool eventsAvailable ();
-    String createSerializedEventJson (String sourceID, String eventType);
     void enqueueEvent (String serializedEventJson);
     String dequeueEvent();
-    bool sendEventsToSerial(Stream &serialport);
 };
 
 #endif

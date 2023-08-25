@@ -23,7 +23,8 @@
 			"unordered_set": "cpp",
 			"vector": "cpp",
 			"string_view": "cpp",
-			"memory": "cpp"
+			"memory": "cpp",
+			"initializer_list": "cpp"
 		}
 	}
 }

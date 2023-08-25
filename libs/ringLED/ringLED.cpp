@@ -27,6 +27,6 @@ void ringLED::followCurrentPixel(uint16_t lightTrailSize){
 
   //Si el pixel actual es distinto del anterior, se ilumina dicho pixel:
   if((getCurrentPixel() != getPrevPixel()) or firstSequence){
-    setPixelColor(getCurrentPixel(), ColorHSV(map8to16bit(getMainHue())));
+    setPixelColor(getCurrentPixel(), ColorHSV(map8to16bit(getMainHue()), getMainSat()));
   }
 }

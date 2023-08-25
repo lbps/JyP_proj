@@ -94,6 +94,10 @@ uint8_t ledStripBase::getMainHue(){
   return _mainHue;
 }
 
+uint8_t ledStripBase::getMainSat(){
+  return _mainSat;
+}
+
 uint16_t ledStripBase::getCurrentPixel(){
   return _currentPixel;
 }
@@ -120,6 +124,11 @@ void ledStripBase::setMainHue (uint8_t mainHue){
   return;
 }
 
+void ledStripBase::setMainSat (uint8_t mainSat){
+  _mainSat = mainSat;
+  return;
+}
+
 void ledStripBase::setCurrentPixel(uint16_t newCurrentPixel){
   _currentPixel = newCurrentPixel;
   return;
@@ -135,6 +144,7 @@ void ledStripBase::rainbowEffect(uint8_t colorStep) {
   if(colorStep<1) colorStep=1;
   if(colorStep>10) colorStep=10;
   _mainHue+=colorStep;
+  _mainSat=255;
   return;
 }
 
@@ -144,13 +154,14 @@ void ledStripBase::colorWipeEffect(bool randomColor, bool forwardDirection, uint
   if(_currentPixel>=(numPixels()-1)){
     if(randomColor){
       _mainHue=random(256);
+      _mainSat=255;
     }else{ 
       _mainHue+=colorStep;
     }
   }
 
   //se actualiza valor del pixel actual:
-  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue)));
+  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue), _mainSat));
 
   //Se actualiza el pixel actual:
   if(forwardDirection){
@@ -179,15 +190,15 @@ void ledStripBase::theaterChaseEffect(bool forwardDir, bool autoColorChange, uin
     for (int i=(0+(_sequenceIdx%spaceBetweenLeds)); i<numPixels(); i+=spaceBetweenLeds){
       for (int j=0; j<numAdjacentLedsOn; j++){
         if((i+j)>=numPixels()) break;
-        setPixelColor(i+j, ColorHSV(map8to16bit(_mainHue)));
+        setPixelColor(i+j, ColorHSV(map8to16bit(_mainHue), _mainSat));
       }
     }
   }else{
     for (int i=((numPixels()-1-(_sequenceIdx%spaceBetweenLeds))); i>=0; i-=spaceBetweenLeds){
-      setPixelColor(i, ColorHSV(map8to16bit(_mainHue)));
+      setPixelColor(i, ColorHSV(map8to16bit(_mainHue), _mainSat));
       for (int j=0; j<numAdjacentLedsOn; j++){
         if((i-j)<0) break;
-        setPixelColor(i-j, ColorHSV(map8to16bit(_mainHue)));
+        setPixelColor(i-j, ColorHSV(map8to16bit(_mainHue), _mainSat));
       }
     }
   }
@@ -200,6 +211,7 @@ void ledStripBase::theaterChaseEffect(bool forwardDir, bool autoColorChange, uin
     _sequenceIdx = 0;
 
     _mainHue = random(255);
+    _mainSat = 255;
   };
   
   return;
@@ -221,6 +233,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
 
         _mainHue=_mainHue+deltaHue;
         if(_mainHue>255) _mainHue=0+(_mainHue-256);
+        _mainSat=255;
       };
 
       //Se encienden todos los leds conjuntos necesarios: 
@@ -230,7 +243,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
         uint32_t pixelHue = _mainHue + (i+j)*deltaHue; 
         if(pixelHue>255) pixelHue=256-pixelHue;
 
-        setPixelColor(i+j, ColorHSV(map8to16bit(_mainHue)));
+        setPixelColor(i+j, ColorHSV(map8to16bit(_mainHue), _mainSat));
       }
     }
   }else{
@@ -242,6 +255,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
 
         _mainHue=_mainHue-(deltaHue*spaceBetweenLeds);
         if(_mainHue<0) _mainHue=256+_mainHue;
+        _mainSat=255;
       };
 
       //Se encienden todos los leds conjuntos necesarios: 
@@ -251,7 +265,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
         uint32_t pixelHue = _mainHue + (i+j)*deltaHue; 
         if(pixelHue>255) pixelHue=256-pixelHue;
         
-        setPixelColor(i-j, ColorHSV(map8to16bit(_mainHue)));
+        setPixelColor(i-j, ColorHSV(map8to16bit(_mainHue), _mainSat));
       }
     }
   }
@@ -263,7 +277,7 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
 void ledStripBase::sparkleEffect(uint16_t numLedsOn){
   clear();
 
-  uint32_t color = ColorHSV(map8to16bit(_mainHue));
+  uint32_t color = ColorHSV(map8to16bit(_mainHue), _mainSat);
   uint16_t pixel;
 
   for(uint16_t i = 0; i<numLedsOn; i++){
@@ -274,7 +288,7 @@ void ledStripBase::sparkleEffect(uint16_t numLedsOn){
 }
 
 void ledStripBase::runningLightsEffect(bool forwardDirection){
-  uint32_t mainColor = ColorHSV(_mainHue);
+  uint32_t mainColor = ColorHSV(map8to16bit(_mainHue), _mainSat);
   int R = (mainColor >> 16) & 0xFF;
   int G = (mainColor >> 8) & 0xFF;
   int B = mainColor & 0xFF;
@@ -362,7 +376,7 @@ void ledStripBase::flashEffect(bool newFlash, uint8_t fadeSpeed){
 
   uint8_t fadeStep = (fadeSpeed/100.0)*255;
   if(newFlash){
-    fill(ColorHSV(map8to16bit(_mainHue)));
+    fill(ColorHSV(map8to16bit(_mainHue), _mainSat));
   }else{
     fadeDarkAll(fadeStep);
   }
@@ -412,7 +426,7 @@ void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardD
   }
 
   //Se enciende a maxima intensidad el pixel principal:
-  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue)));
+  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue), _mainSat));
 
 }
 
@@ -460,6 +474,6 @@ void ledStripBase::newKITTeffect(uint16_t lightTrailSize, bool initialForwardDir
 
   //Se enciende a maxima intensidad el pixel principal y el espejo:
   uint16_t mirrorPixel=(numPixels()-1)-_currentPixel;
-  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue)));
-  setPixelColor(mirrorPixel, ColorHSV(map8to16bit(_mainHue)));
+  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue), _mainSat));
+  setPixelColor(mirrorPixel, ColorHSV(map8to16bit(_mainHue), _mainSat));
 }

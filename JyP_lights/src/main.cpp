@@ -1,11 +1,37 @@
 #include <Arduino.h>
+#include <ArduinoQueue.h>
+#include "ESP32BTSerial.h"
+#include "eventsQueue.h"
 #include "ringLED.h"
 #include "ledStripBase.h"
-#include "ESP32BTSerial.h"
-#include "stateMachine.h"
+#include "buttonState.h"
+#include "encoderState.h" 
 
 //INICIALIAZCION DE MODULO BLUETOOTH
 ESP32BTSerial SerialBT;
+
+//INICIALIZACION DE COLA DE EVENTOS
+eventsQueue controlEventsQueue = eventsQueue(200);
+
+//CREACION DE MAQUINAS DE ESTADO CONTROLES. 
+buttonState BR1 = buttonState(); //BOTON ROJO 1
+buttonState BG1 = buttonState(); //BOTON VERDE 1
+buttonState BB1 = buttonState(); //BOTON AZUL 1
+buttonState BY1 = buttonState(); //BOTON AMARILLO 1
+buttonState BW1 = buttonState(); //BOTON BLANCO 1
+buttonState BF1 = buttonState(); //BOTON NEGRO/FANTASIA 1
+buttonState BR2 = buttonState(); //BOTON ROJO 2
+buttonState BG2 = buttonState(); //BOTON VERDE 2
+buttonState BB2 = buttonState(); //BOTON AZUL 2
+buttonState BY2 = buttonState(); //BOTON AMARILLO 2
+buttonState BW2 = buttonState(); //BOTON BLANCO 2
+buttonState BF2 = buttonState(); //BOTON NEGRO/FANTASIA 2
+buttonState BRE = buttonState(); //BOTON ENCODER ANILLO EXTERIOR
+buttonState BRI = buttonState(); //BOTON ENCODER ANILLO INTERIOR
+buttonState BRC = buttonState(); //BOTON ENCODER CONTROL EFECTOS
+encoderState ERE = encoderState(); //ENCODER ANILLO EXTERIOR
+encoderState ERI = encoderState(); //ENCODER ANILLO INTERIOR
+encoderState ERC = encoderState(); //ENCODER CONTROL EFECTOS
 
 //INICIALIZACION DE TIRAS LED:
 ringLED ringE = ringLED(110, 25);
@@ -14,8 +40,17 @@ ledStripBase letterLED_J = ledStripBase(16, 27);
 ledStripBase letterLED_Y = ledStripBase(6, 28);
 ledStripBase letterLED_P = ledStripBase(17, 29);
 
-//CREACION DE OBJETOS PARA ALMACENAR MAQUINAS DE ESTADO. 
+//INICIALIZACION DE VARIABLES DE EFECTOS:
 
+
+//DECLARACION DE FUNCIONES UTILIZADAS:
+void updateControlEvents();
+void updateControlStates();
+void updateLightEffects();
+void updateLightEffect_ringE(uint8_t effectIdx = 0);
+void updateLightEffect_ringI(uint8_t effectIdx = 0);
+void updateLightEffect_letters(uint8_t effectIdx = 0);
+uint8_t getHueFromColorButtons (bool buttonsPressed[6]);
 
 void setup() {
 
@@ -41,20 +76,14 @@ unsigned long t_start = millis();
 
 void loop() {
 
+  //Recopilacion de nuevos eventos BT de control:
+  updateControlEvents();
 
-
-  //Recopilacion de nuevos eventos:
-
-  //Actualizacion de maquinas de estado:
-
-  //Actualizacion de valor de pixel anterior de cada tira:
-  ringE.updatePreviousPixel();
-  ringI.updatePreviousPixel();
-  letterLED_J.updatePreviousPixel();
-  letterLED_Y.updatePreviousPixel();
-  letterLED_P.updatePreviousPixel();
+  //Actualizacion de maquinas de estado de controles:
+  updateControlStates();
 
   //Actualizacion y ejecucion de efecto seleccionado:
+  updateLightEffects();
 
   //Actualizacion de visualizacion de cada tira:
   ringE.updateDisplay();
@@ -63,4 +92,583 @@ void loop() {
   letterLED_Y.updateDisplay();
   letterLED_P.updateDisplay();
 
+}
+
+void updateControlEvents(){
+  while (SerialBT.available()){
+    String controlEvent = SerialBT.readNextData();
+    // Serial.println(nextData);
+    controlEventsQueue.enqueueEvent(controlEvent);
+  }
+}
+
+void updateControlStates(){
+  //Primero se actualizan todos los controles con evento vacio para que se
+  //actualice el evento anterior
+  BR1.updateState();
+  BG1.updateState();
+  BB1.updateState();
+  BY1.updateState();
+  BW1.updateState();
+  BF1.updateState();
+  BR2.updateState();
+  BG2.updateState();
+  BB2.updateState();
+  BY2.updateState();
+  BW2.updateState();
+  BF2.updateState();
+  BRE.updateState();
+  BRI.updateState();
+  BRC.updateState();
+  ERE.updateState();
+  ERI.updateState();
+  ERC.updateState();
+
+  //Si no hay nuevos eventos de control se sale:
+  if(!controlEventsQueue.eventsAvailable()) return;
+
+  //Inicializamos los booleanos de evento registrado de los botones, ya que si hay mas 
+  //de un evento de un mismo boton en la cola no queremos que un segundo evento machaque
+  //el estado del primero ya que perderiamos el primer evento:
+  bool prevEvent_BR1 = 0;
+  bool prevEvent_BG1 = 0;
+  bool prevEvent_BB1 = 0;
+  bool prevEvent_BY1 = 0;
+  bool prevEvent_BW1 = 0;
+  bool prevEvent_BF1 = 0;
+  bool prevEvent_BR2 = 0;
+  bool prevEvent_BG2 = 0;
+  bool prevEvent_BB2 = 0;
+  bool prevEvent_BY2 = 0;
+  bool prevEvent_BW2 = 0;
+  bool prevEvent_BF2 = 0;
+  bool prevEvent_BRE = 0;
+  bool prevEvent_BRI = 0;
+  bool prevEvent_BRC = 0;
+
+
+  //Si hay eventos se actualiza el estado de los controles correspondientes:
+  uint16_t numEvents = controlEventsQueue.getNumEvents();
+  for (int i=0; i<numEvents; i++){
+    //Se obtiene nuevo evento de control:
+    String newEvent = controlEventsQueue.dequeueEvent();
+
+    //Se divide la fuente del evento y el valor del evento:
+    int splitPos = newEvent.indexOf('_');
+    if(splitPos == -1) continue; 
+    String eventSource = newEvent.substring(0, splitPos);
+    String eventValue = newEvent.substring(splitPos+1);
+
+    //Se actualiza la maquina de estados de los controles:
+    //*** BOTON ROJO 1
+    if(eventSource=="BR1"){
+      if(prevEvent_BR1) controlEventsQueue.enqueueEvent(eventSource);
+      BR1.updateState(eventValue);
+      prevEvent_BR1 = 1;
+    //*** BOTON VERDE 1
+    }else if(eventSource=="BG1"){
+      if(prevEvent_BG1) controlEventsQueue.enqueueEvent(eventSource);
+      BG1.updateState(eventValue);
+      prevEvent_BG1 = 1;
+    //*** BOTON AZUL 1
+    }else if(eventSource=="BB1"){
+      if(prevEvent_BB1) controlEventsQueue.enqueueEvent(eventSource);
+      BB1.updateState(eventValue);
+      prevEvent_BB1 = 1;
+    //*** BOTON AMARILLO 1
+    }else if(eventSource=="BY1"){
+      if(prevEvent_BY1) controlEventsQueue.enqueueEvent(eventSource);
+      BY1.updateState(eventValue);
+      prevEvent_BY1 = 1;
+    //*** BOTON BLANCO 1
+    }else if(eventSource=="BW1"){
+      if(prevEvent_BW1) controlEventsQueue.enqueueEvent(eventSource);
+      BW1.updateState(eventValue);
+      prevEvent_BW1 = 1;
+    //*** BOTON NEGRO/FANTASIA 1
+    }else if(eventSource=="BF1"){
+      if(prevEvent_BF1) controlEventsQueue.enqueueEvent(eventSource);
+      BF1.updateState(eventValue);
+      prevEvent_BF1 = 1;
+    //*** BOTON ROJO 2
+    }else if(eventSource=="BR2"){
+      if(prevEvent_BR2) controlEventsQueue.enqueueEvent(eventSource);
+      BR2.updateState(eventValue);
+      prevEvent_BR2 = 1;
+    //*** BOTON VERDE 2
+    }else if(eventSource=="BG2"){
+      if(prevEvent_BG2) controlEventsQueue.enqueueEvent(eventSource);
+      BG2.updateState(eventValue);
+      prevEvent_BG2 = 1;
+    //*** BOTON AZUL 2
+    }else if(eventSource=="BB2"){
+      if(prevEvent_BB2) controlEventsQueue.enqueueEvent(eventSource);
+      BB2.updateState(eventValue);
+      prevEvent_BB2 = 1;
+    //*** BOTON AMARILLO 2
+    }else if(eventSource=="BY2"){
+      if(prevEvent_BY2) controlEventsQueue.enqueueEvent(eventSource);
+      BY2.updateState(eventValue);
+      prevEvent_BY2 = 1;
+    //*** BOTON BLANCO 2
+    }else if(eventSource=="BW2"){
+      if(prevEvent_BW2) controlEventsQueue.enqueueEvent(eventSource);
+      BW2.updateState(eventValue);
+      prevEvent_BW2 = 1;
+    //*** BOTON NEGRO/FANTASIA 2
+    }else if(eventSource=="BF2"){
+      if(prevEvent_BF2) controlEventsQueue.enqueueEvent(eventSource);
+      BF2.updateState(eventValue);
+      prevEvent_BF2 = 1;
+    //*** BOTON ENCODER ANILLO EXTERIOR
+    }else if(eventSource=="BRE"){
+      if(prevEvent_BRE) controlEventsQueue.enqueueEvent(eventSource);
+      BRE.updateState(eventValue);
+      prevEvent_BRE = 1;
+    //*** BOTON ENCODER ANILLO INTERIOR
+    }else if(eventSource=="BRI"){
+      if(prevEvent_BRI) controlEventsQueue.enqueueEvent(eventSource);
+      BRI.updateState(eventValue);
+      prevEvent_BRI = 1;
+    //*** BOTON ENCODER CONTROL EFECTOS
+    }else if(eventSource=="BRC"){
+      if(prevEvent_BRC) controlEventsQueue.enqueueEvent(eventSource);
+      BRC.updateState(eventValue);
+      prevEvent_BRC = 1;
+    //*** ENCODER ANILLO EXTERIOR
+    }else if(eventSource=="ERE"){
+      ERE.updateState(eventValue);
+    //*** ENCODER ANILLO INTERIOR
+    }else if(eventSource=="ERI"){
+      ERI.updateState(eventValue);
+    //*** ENCODER CONTROL EFECTOS
+    }else if(eventSource=="ERC"){
+      ERC.updateState(eventValue);
+    }
+  }
+}
+
+void updateLightEffects(){
+
+  //Actualizacion de valor de pixel anterior de cada tira:
+  ringE.updatePreviousPixel();
+  ringI.updatePreviousPixel();
+  letterLED_J.updatePreviousPixel();
+  letterLED_Y.updatePreviousPixel();
+  letterLED_P.updatePreviousPixel();
+
+  //--------------------
+  // ANILLO EXTERIOR
+  //--------------------
+  updateLightEffect_ringE(0);
+
+  //--------------------
+  // ANILLO INTERIOR
+  //--------------------
+  updateLightEffect_ringI(0);
+
+  //---------
+  // LETRAS
+  //---------
+  updateLightEffect_letters(0);
+
+}
+
+void updateLightEffect_ringE(uint8_t effectIdx){
+
+  //-------------------------------------------------------
+  // COMPROBACION DE BOTONES PARA MODO FLASH O CAMBIO COLOR
+  //-------------------------------------------------------
+  //Se comprueba si alguno de los botones de color de anillo exterior ha sido pulsado y el tiempo
+  //que ha estado pulsado:
+  buttonState buttonsArray [] = {BR1, BG1, BB1, BY1, BW1, BF1};
+  uint8_t arrayLength = (sizeof(buttonsArray)/sizeof(buttonsArray[0]));
+  bool buttonsPressed [arrayLength];
+  bool anyButtonPressed = 0;
+  unsigned long minTimeButtonPressed = -1;
+  for(int i=0; i<arrayLength; i++){
+    buttonsPressed[i] = buttonsArray[i].getCurrentState();
+    if(buttonsPressed[i]){
+      anyButtonPressed = 1;
+
+      unsigned long timeButtonPressed = buttonsArray[i].getTimeInCurrentState();
+      if(timeButtonPressed<minTimeButtonPressed or minTimeButtonPressed==-1){
+        minTimeButtonPressed=timeButtonPressed;
+      }
+    } 
+  }
+
+  //Si se ha pulsado alguno de los botones de flash, enciende todas las luces del color seleccionado:
+  if(anyButtonPressed){
+    //Se almacena hue y sat que habia antes de pulsar:
+    uint8_t prevMainHue = ringE.getMainHue();
+    uint8_t prevMainSat = ringE.getMainSat();
+
+    //Si se ha pulsado boton blanco se hace flash blanco: 
+    if(buttonsPressed[4]){
+      ringE.setMainSat(0);
+      ringE.flashEffect(1);
+
+    //Si se ha pulsado boton negro/fantasia se hace flash arcoiris:
+    }else if(buttonsPressed[5]){
+      ringE.setMainSat(255);
+      ringE.rainbow(random(65535));
+
+    //Si se pulsa cualquiera de los demas botones:
+    }else{
+      //Se extrae el color de los botones presionados:
+      uint8_t newHue = getHueFromColorButtons(buttonsPressed);
+
+      //Se modifica color prinicipal:
+      ringE.setMainHue(newHue);
+      ringE.setMainSat(255);
+      ringE.flashEffect(1);
+    }
+
+    //Si la pulsacion es de menos de 4 segundos se vuelve a color anterior al flash
+    //para que siga con efecto previo:
+    if(minTimeButtonPressed<4000){
+      ringE.setMainHue(prevMainHue);
+      ringE.setMainSat(prevMainSat);
+    }
+
+    //Se sale del procedimiento directmanete.
+    return; 
+  }
+
+  //------------------------
+  // VISUALIZACION DE EFECTO
+  //------------------------
+  switch (effectIdx){
+    case 0:
+      ringE.theaterChaseRainbowEffect(1,10,3,5);
+      break;
+    case 1:
+      ringE.theaterChaseEffect(1,0,10,3,5);
+      break;
+    case 2:
+      ringE.newKITTeffect(30, 1, 1);
+      break;
+    case 3: 
+      ringE.basicKITTeffect(30, 1, 1);
+      break;
+    case 4:
+      ringE.runningLightsEffect();
+      break;
+    case 5:
+      ringE.sparkleEffect(50);
+      break;
+    case 6:
+      ringE.colorWipeEffect(1, 1, 10);
+      break;
+    case 7:
+      ringE.rainbowEffect(1);
+      break;
+    case 8:
+      ringE.followCurrentPixel(30);
+      break;
+    case 9:
+      //El encendido del flash lo hara la gestino de botones presionado, durante visualizacion efecto
+      //solo oscurece:
+      ringE.flashEffect(0, 80);
+      break;
+    default:
+      break;
+  }
+
+  return;   
+}
+
+void updateLightEffect_ringI(uint8_t effectIdx){
+
+  //-------------------------------------------------------
+  // COMPROBACION DE BOTONES PARA MODO FLASH O CAMBIO COLOR
+  //-------------------------------------------------------
+  //Se comprueba si alguno de los botones de color de anillo exterior ha sido pulsado y el tiempo
+  //que ha estado pulsado:
+  buttonState buttonsArray [] = {BR2, BG2, BB2, BY2, BW2, BF2};
+  uint8_t arrayLength = (sizeof(buttonsArray)/sizeof(buttonsArray[0]));
+  bool buttonsPressed [arrayLength];
+  bool anyButtonPressed = 0;
+  unsigned long minTimeButtonPressed = -1;
+  for(int i=0; i<arrayLength; i++){
+    buttonsPressed[i] = buttonsArray[i].getCurrentState();
+    if(buttonsPressed[i]){
+      anyButtonPressed = 1;
+
+      unsigned long timeButtonPressed = buttonsArray[i].getTimeInCurrentState();
+      if(timeButtonPressed<minTimeButtonPressed or minTimeButtonPressed==-1){
+        minTimeButtonPressed=timeButtonPressed;
+      }
+    } 
+  }
+
+  //Si se ha pulsado alguno de los botones de flash, enciende todas las luces del color seleccionado:
+  if(anyButtonPressed){
+    //Se almacena hue y sat que habia antes de pulsar:
+    uint8_t prevMainHue = ringI.getMainHue();
+    uint8_t prevMainSat = ringI.getMainSat();
+
+    //Si se ha pulsado boton blanco se hace flash blanco: 
+    if(buttonsPressed[4]){
+      ringI.setMainSat(0);
+      ringI.flashEffect(1);
+
+    //Si se ha pulsado boton negro/fantasia se hace flash arcoiris:
+    }else if(buttonsPressed[5]){
+      ringI.setMainSat(255);
+      ringI.rainbow(random(65535));
+
+    //Si se pulsa cualquiera de los demas botones:
+    }else{
+      //Se extrae el color de los botones presionados:
+      uint8_t newHue = getHueFromColorButtons(buttonsPressed);
+
+      //Se modifica color prinicipal:
+      ringI.setMainHue(newHue);
+      ringI.setMainSat(255);
+      ringI.flashEffect(1);
+    }
+
+    //Si la pulsacion es de menos de 4 segundos se vuelve a color anterior al flash
+    //para que siga con efecto previo:
+    if(minTimeButtonPressed<4000){
+      ringI.setMainHue(prevMainHue);
+      ringI.setMainSat(prevMainSat);
+    }
+
+    //Se sale del procedimiento directmanete.
+    return; 
+  }
+
+  //------------------------
+  // VISUALIZACION DE EFECTO
+  //------------------------
+  switch (effectIdx){
+    case 0:
+      ringI.theaterChaseRainbowEffect(1,10,3,5);
+      break;
+    case 1:
+      ringI.theaterChaseEffect(1,0,10,3,5);
+      break;
+    case 2:
+      ringI.newKITTeffect(30, 1, 1);
+      break;
+    case 3: 
+      ringI.basicKITTeffect(30, 1, 1);
+      break;
+    case 4:
+      ringI.runningLightsEffect();
+      break;
+    case 5:
+      ringI.sparkleEffect(50);
+      break;
+    case 6:
+      ringI.colorWipeEffect(1, 1, 10);
+      break;
+    case 7:
+      ringI.rainbowEffect(1);
+      break;
+    case 8:
+      ringI.followCurrentPixel(30);
+      break;
+    case 9:
+      //El encendido del flash lo hara la gestino de botones presionado, durante visualizacion efecto
+      //solo oscurece:
+      ringI.flashEffect(0, 80);
+      break;
+    default:
+      break;
+  }
+
+  return;   
+}
+
+void updateLightEffect_letters(uint8_t effectIdx){
+
+  //-------------------------------------------------------
+  // COMPROBACION DE BOTONES PARA MODO FLASH O CAMBIO COLOR
+  //-------------------------------------------------------
+  //Se comprueba si alguno de los botones de color de anillo exterior ha sido pulsado y el tiempo
+  //que ha estado pulsado:
+  buttonState buttonsArray [] = {BR1, BG1, BB1, BY1, BW1, BF1};
+  uint8_t arrayLength = (sizeof(buttonsArray)/sizeof(buttonsArray[0]));
+  bool buttonsPressed [arrayLength];
+  bool anyButtonPressed = 0;
+  unsigned long minTimeButtonPressed = -1;
+  for(int i=0; i<arrayLength; i++){
+    buttonsPressed[i] = buttonsArray[i].getCurrentState();
+    if(buttonsPressed[i]){
+      anyButtonPressed = 1;
+
+      unsigned long timeButtonPressed = buttonsArray[i].getTimeInCurrentState();
+      if(timeButtonPressed<minTimeButtonPressed or minTimeButtonPressed==-1){
+        minTimeButtonPressed=timeButtonPressed;
+      }
+    } 
+  }
+
+  //Si se ha pulsado alguno de los botones de flash, enciende todas las luces del color seleccionado:
+  if(anyButtonPressed){
+    //Se almacena hue y sat que habia antes de pulsar:
+    uint8_t prevMainHue_letterJ = letterLED_J.getMainHue();
+    uint8_t prevMainHue_letterY = letterLED_Y.getMainHue();
+    uint8_t prevMainHue_letterP = letterLED_P.getMainHue();
+    uint8_t prevMainSat_letterJ = letterLED_J.getMainSat();
+    uint8_t prevMainSat_letterY = letterLED_Y.getMainSat();
+    uint8_t prevMainSat_letterP = letterLED_P.getMainSat();
+
+    //Si se ha pulsado boton blanco se hace flash blanco: 
+    if(buttonsPressed[4]){
+      letterLED_J.setMainSat(0);
+      letterLED_Y.setMainSat(0);
+      letterLED_P.setMainSat(0);
+    
+      letterLED_J.flashEffect(1);
+      letterLED_Y.flashEffect(1);
+      letterLED_P.flashEffect(1);
+
+    //Si se ha pulsado boton negro/fantasia se hace flash arcoiris:
+    }else if(buttonsPressed[5]){
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainSat(255);
+
+      letterLED_J.rainbow(random(65535));
+      letterLED_Y.rainbow(random(65535));
+      letterLED_P.rainbow(random(65535));
+
+    //Si se pulsa cualquiera de los demas botones:
+    }else{
+      //Se extrae el color de los botones presionados:
+      uint8_t newHue = getHueFromColorButtons(buttonsPressed);
+
+      //Se modifica color prinicipal:
+      letterLED_J.setMainHue(newHue);
+      letterLED_Y.setMainHue(newHue);
+      letterLED_P.setMainHue(newHue);
+
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainSat(255);
+
+      letterLED_J.flashEffect(1);
+      letterLED_Y.flashEffect(1);
+      letterLED_P.flashEffect(1);
+    }
+
+    //Si la pulsacion es de menos de 4 segundos, o no se esta en modo flash, 
+    // se vuelve a color anterior al flash para que siga con efecto previo:
+    if(minTimeButtonPressed<4000 or effectIdx!=9){
+      letterLED_J.setMainHue(prevMainHue_letterJ);
+      letterLED_Y.setMainHue(prevMainHue_letterY);
+      letterLED_P.setMainHue(prevMainHue_letterP);
+
+      letterLED_J.setMainSat(prevMainSat_letterJ);
+      letterLED_Y.setMainSat(prevMainSat_letterY);
+      letterLED_P.setMainSat(prevMainSat_letterP);
+    }
+
+    //Se sale del procedimiento directmanete.
+    return; 
+  }
+
+  //------------------------
+  // VISUALIZACION DE EFECTO
+  //------------------------
+  switch (effectIdx){
+    case 0:
+      letterLED_J.theaterChaseRainbowEffect(1,10,3,5);
+      letterLED_Y.theaterChaseRainbowEffect(1,10,3,5);
+      letterLED_P.theaterChaseRainbowEffect(1,10,3,5);
+      break;
+    case 1:
+      letterLED_J.theaterChaseEffect(1,0,10,3,5);
+      letterLED_Y.theaterChaseEffect(1,0,10,3,5);
+      letterLED_P.theaterChaseEffect(1,0,10,3,5);
+      break;
+    case 2:
+      letterLED_J.newKITTeffect(30, 1, 1);
+      letterLED_Y.newKITTeffect(30, 1, 1);
+      letterLED_P.newKITTeffect(30, 1, 1);
+      break;
+    case 3: 
+      letterLED_J.basicKITTeffect(30, 1, 1);
+      letterLED_Y.basicKITTeffect(30, 1, 1);
+      letterLED_P.basicKITTeffect(30, 1, 1);
+      break;
+    case 4:
+      letterLED_J.runningLightsEffect();
+      letterLED_Y.runningLightsEffect();
+      letterLED_P.runningLightsEffect();
+      break;
+    case 5:
+      letterLED_J.sparkleEffect(50);
+      letterLED_Y.sparkleEffect(50);
+      letterLED_P.sparkleEffect(50);
+      break;
+    case 6:
+      letterLED_J.colorWipeEffect(1, 1, 10);
+      letterLED_Y.colorWipeEffect(1, 1, 10);
+      letterLED_P.colorWipeEffect(1, 1, 10);
+      break;
+    case 7:
+      letterLED_J.rainbowEffect(1);
+      letterLED_Y.rainbowEffect(1);
+      letterLED_P.rainbowEffect(1);
+      break;
+    case 9:
+
+      letterLED_J.flashEffect(0, 80);
+      letterLED_Y.flashEffect(0, 80);
+      letterLED_P.flashEffect(0, 80);
+      break;
+    default:
+      break;
+  }
+
+  return;   
+}
+
+
+uint8_t getHueFromColorButtons (bool buttonsPressed[6]){
+  //***buttonsPressed tiene que contener: {BRX, BGX, BBX, BYX, BWX, BFX}
+  uint8_t newHue; 
+
+  //Si esta pulsado el rojo:
+  if(buttonsPressed[0]){
+    newHue = 0; //rojo
+    //Si tambien lo esta el verde:
+    if(buttonsPressed[1]){
+      newHue = 43; //amarillo
+    //Si tambien lo esta el azul:
+    }else if(buttonsPressed[2]){
+      newHue = 213; //violeta
+    //Si tambien lo esta el amarillo:
+    }else if(buttonsPressed[3]){
+      newHue = 28; //naranja
+    }
+
+  //Si esta pulsado el verde:
+  }else if(buttonsPressed[1]){
+    newHue = 85; //verde
+    //Si tambien lo esta el azul:
+    if(buttonsPressed[2]){
+      newHue = 128; //Turquesa
+    //Si tambien lo esta el amarillo:
+    }else if(buttonsPressed[3]){
+      newHue = 56; //Amarillo verdoso
+    }
+
+  //Si esta pulsado el azul:
+  }else if(buttonsPressed[1]){
+    newHue = 170; //azul
+
+    //Si tambien lo esta el amarillo:
+    if(buttonsPressed[3]){
+      newHue = 109; //Verde azulado
+    }
+  }
+
+  return newHue;
 }
