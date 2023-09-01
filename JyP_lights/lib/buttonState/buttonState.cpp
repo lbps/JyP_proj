@@ -34,9 +34,9 @@ void buttonState::updateState(String eventValue){
 
 bool buttonState::stateChanged(){
     if(_currentState==_prevState){
-     return 1;
-    }else{ 
      return 0;
+    }else{ 
+     return 1;
     }
 }
 

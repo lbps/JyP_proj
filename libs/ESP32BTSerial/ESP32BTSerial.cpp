@@ -13,7 +13,9 @@ String ESP32BTSerial::readNextData(char endChar){
     while (available()) {
         char charReceived = char(read());
         if (charReceived != endChar) {
-            _dataInProgress = _dataInProgress+String(charReceived);
+            if(charReceived != '\r'){
+                _dataInProgress = _dataInProgress+String(charReceived);
+            }  
         }else {
             newData=_dataInProgress;
             _dataInProgress="";

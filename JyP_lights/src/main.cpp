@@ -34,11 +34,11 @@ encoderState ERI = encoderState(); //ENCODER ANILLO INTERIOR
 encoderState ERC = encoderState(); //ENCODER CONTROL EFECTOS
 
 //INICIALIZACION DE TIRAS LED:
-ringLED ringE = ringLED(110, 25);
+ringLED ringE = ringLED(110, 27);
 ringLED ringI = ringLED(80, 26);
-ledStripBase letterLED_J = ledStripBase(16, 27);
-ledStripBase letterLED_Y = ledStripBase(6, 28);
-ledStripBase letterLED_P = ledStripBase(17, 29);
+ledStripBase letterLED_J = ledStripBase(16, 25);
+ledStripBase letterLED_Y = ledStripBase(6, 33);
+ledStripBase letterLED_P = ledStripBase(17, 32);
 
 //INICIALIZACION DE VARIABLES DE EFECTOS:
 
@@ -66,10 +66,13 @@ void setup() {
   letterLED_P.initStrip(100);
 
   //DEBUG: Se inicializa Serial para logs
-  Serial.begin(9600);
+  // Serial.begin(9600);
+  // delay(500);
 
   //DEBUG: Se saca log de inicion de programa:
-  Serial.println("Inicio programa...");
+  // Serial.println("Inicio programa...");
+//   pinMode(2,OUTPUT); //TEST
+//   digitalWrite(1,HIGH); //TEST
 }
 
 unsigned long t_start = millis();
@@ -92,12 +95,17 @@ void loop() {
   letterLED_Y.updateDisplay();
   letterLED_P.updateDisplay();
 
+  //TEST
+  // delay(500);
+  // digitalWrite(2,HIGH);
+  // delay(500);
+  // digitalWrite(2,LOW);
 }
 
 void updateControlEvents(){
   while (SerialBT.available()){
     String controlEvent = SerialBT.readNextData();
-    // Serial.println(nextData);
+    // Serial.println("Nuevo evento: "+controlEvent);
     controlEventsQueue.enqueueEvent(controlEvent);
   }
 }
@@ -152,13 +160,15 @@ void updateControlStates(){
   for (int i=0; i<numEvents; i++){
     //Se obtiene nuevo evento de control:
     String newEvent = controlEventsQueue.dequeueEvent();
+    // Serial.println(newEvent);
 
     //Se divide la fuente del evento y el valor del evento:
     int splitPos = newEvent.indexOf('_');
     if(splitPos == -1) continue; 
     String eventSource = newEvent.substring(0, splitPos);
     String eventValue = newEvent.substring(splitPos+1);
-
+    // Serial.println("eventSource: "+eventSource+"; eventValue: "+eventValue);
+    
     //Se actualiza la maquina de estados de los controles:
     //*** BOTON ROJO 1
     if(eventSource=="BR1"){
@@ -260,7 +270,7 @@ void updateLightEffects(){
   //--------------------
   // ANILLO EXTERIOR
   //--------------------
-  updateLightEffect_ringE(0);
+  updateLightEffect_ringE(2);
 
   //--------------------
   // ANILLO INTERIOR
@@ -288,9 +298,10 @@ void updateLightEffect_ringE(uint8_t effectIdx){
   unsigned long minTimeButtonPressed = -1;
   for(int i=0; i<arrayLength; i++){
     buttonsPressed[i] = buttonsArray[i].getCurrentState();
+    
     if(buttonsPressed[i]){
       anyButtonPressed = 1;
-
+      // Serial.println("buttonPressed "+String(i)+" pressed: "+int(buttonsPressed[i]));
       unsigned long timeButtonPressed = buttonsArray[i].getTimeInCurrentState();
       if(timeButtonPressed<minTimeButtonPressed or minTimeButtonPressed==-1){
         minTimeButtonPressed=timeButtonPressed;
@@ -661,7 +672,7 @@ uint8_t getHueFromColorButtons (bool buttonsPressed[6]){
     }
 
   //Si esta pulsado el azul:
-  }else if(buttonsPressed[1]){
+  }else if(buttonsPressed[2]){
     newHue = 170; //azul
 
     //Si tambien lo esta el amarillo:
