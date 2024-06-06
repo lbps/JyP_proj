@@ -25,21 +25,22 @@ void encoderControl::updateEncoders (){
 
         int32_t newPosition = encoder_i->read();
         
-        String eventType="";
+        String eventValue="";
         if(newPosition != prevPosition){
             // Serial.println("prevPosition: "+String(prevPosition)); //DEBUG
             // Serial.println("newPosition: "+String(newPosition)); //DEBUG
             if (prevPosition<newPosition){
-                eventType="CW"; //clockWise
+                eventValue="CW"; //clockWise
             }else if(prevPosition>newPosition ){
-                eventType="CCW"; //counterClockwise
+                eventValue="CCW"; //counterClockwise
             };
             _encoderPosArray[i]=newPosition;
         }
         
-        if (eventType!=""){
-            String eventJson_str = _eventsQueue->createSerializedEventJson(encoderID, eventType);
-            _eventsQueue->enqueueEvent(eventJson_str);
+        if (eventValue!=""){
+            String controlEvent = encoderID+"_"+eventValue;
+            Serial.println("updateEncoders-> nuevo evento: "+controlEvent); //DEBUG
+            _eventsQueue->enqueueEvent(controlEvent);
         };
     };
 

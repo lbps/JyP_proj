@@ -22,8 +22,16 @@ void controlsManager::sendEventsToSerial(Stream &serialport, unsigned long minEv
     unsigned long timeElapsed_us = micros() - _timeLastEventSent_us;
     if(timeElapsed_us>minEventSendingPeriod_us){
 
-        //Se envian eventos que haya disponibles:
-        bool eventSent = _eventsQueue.sendEventsToSerial(serialport);
+        //Si hay algún evento se envia:
+        bool eventSent = 0;
+        if(_eventsQueue.eventsAvailable()){
+            String controlEvent = _eventsQueue.dequeueEvent();
+            serialport.println(controlEvent);
+            eventSent = 1;
+            Serial.println("Enviado evento: "+controlEvent);
+        };
+
+        //Se actualiza el tiempo desde ulimo evento enviado:
         if(eventSent){
             _timeLastEventSent_us = micros();
         };

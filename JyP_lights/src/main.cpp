@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <ArduinoQueue.h>
 #include "ESP32BTSerial.h"
 #include "eventsQueue.h"
 #include "ringLED.h"
@@ -9,6 +8,11 @@
 
 //INICIALIAZCION DE MODULO BLUETOOTH
 ESP32BTSerial SerialBT;
+String BTmasterName = "JyP_control";
+String BTslaveName = "JyP_lights";
+
+//Inicializacion de pin del LED de la placa para avisar de desconexion BT
+const int disconnectionLedPin = 2; // Pin del LED, ajusta según tu placa
 
 //INICIALIZACION DE COLA DE EVENTOS
 eventsQueue controlEventsQueue = eventsQueue(200);
@@ -31,7 +35,7 @@ buttonState BRI = buttonState(); //BOTON ENCODER ANILLO INTERIOR
 buttonState BRC = buttonState(); //BOTON ENCODER CONTROL EFECTOS
 encoderState ERE = encoderState(); //ENCODER ANILLO EXTERIOR
 encoderState ERI = encoderState(); //ENCODER ANILLO INTERIOR
-encoderState ERC = encoderState(); //ENCODER CONTROL EFECTOS
+encoderState EC = encoderState(); //ENCODER CONTROL EFECTOS
 
 //INICIALIZACION DE TIRAS LED:
 ringLED ringE = ringLED(110, 27);
@@ -54,9 +58,16 @@ uint8_t getHueFromColorButtons (bool buttonsPressed[6]);
 
 void setup() {
 
+  Serial.begin(9600);
+  Serial.println("Inicio programa JyP_lights");
+
+  //Se inicializa el pin de conexion
+  pinMode(disconnectionLedPin, OUTPUT); // Configura el pin del LED de la placacomo salida
+  digitalWrite(disconnectionLedPin, LOW); // Se apaga el LED inicialmente
+    
   //Se confiugra el BTslave.
-  // SerialBT.setPin("1234");
-  SerialBT.begin("JyP_lights");
+  Serial.println("Inicializacion de BT");
+  SerialBT.begin(BTslaveName); // Nombre del dispositivo Bluetooth
 
   //Se inicializan todas las tiras LED.
   ringE.initStrip(100);
@@ -65,19 +76,30 @@ void setup() {
   letterLED_Y.initStrip(100);
   letterLED_P.initStrip(100);
 
-  //DEBUG: Se inicializa Serial para logs
-  // Serial.begin(9600);
-  // delay(500);
-
-  //DEBUG: Se saca log de inicion de programa:
-  // Serial.println("Inicio programa...");
-//   pinMode(2,OUTPUT); //TEST
-//   digitalWrite(1,HIGH); //TEST
+  Serial.println("Comienzo bucle");
 }
 
 unsigned long t_start = millis();
-
+bool BTconnected = 0;
 void loop() {
+
+  //Comprobacion de conexion con maestro BT:
+  if(!SerialBT.connected()){
+    if(BTconnected){
+      //Se enciende el led indicador de desconexion
+      digitalWrite(disconnectionLedPin, LOW); // Enciende el LED inicialmente
+      Serial.println("Se ha desconectado BT de: "+BTmasterName);
+      BTconnected=0;
+    }
+
+  }else{
+    if(!BTconnected){
+      //Se enciende el led indicador de desconexion
+      digitalWrite(disconnectionLedPin, HIGH); // Enciende el LED inicialmente
+      Serial.println("Se ha conectado BT a: "+BTmasterName);
+      BTconnected=1;
+    }
+  }
 
   //Recopilacion de nuevos eventos BT de control:
   updateControlEvents();
@@ -94,18 +116,12 @@ void loop() {
   letterLED_J.updateDisplay();
   letterLED_Y.updateDisplay();
   letterLED_P.updateDisplay();
-
-  //TEST
-  // delay(500);
-  // digitalWrite(2,HIGH);
-  // delay(500);
-  // digitalWrite(2,LOW);
 }
 
 void updateControlEvents(){
   while (SerialBT.available()){
     String controlEvent = SerialBT.readNextData();
-    // Serial.println("Nuevo evento: "+controlEvent);
+    Serial.println("Nuevo evento recibido: "+controlEvent);
     controlEventsQueue.enqueueEvent(controlEvent);
   }
 }
@@ -130,7 +146,7 @@ void updateControlStates(){
   BRC.updateState();
   ERE.updateState();
   ERI.updateState();
-  ERC.updateState();
+  EC.updateState();
 
   //Si no hay nuevos eventos de control se sale:
   if(!controlEventsQueue.eventsAvailable()) return;
@@ -252,8 +268,8 @@ void updateControlStates(){
     }else if(eventSource=="ERI"){
       ERI.updateState(eventValue);
     //*** ENCODER CONTROL EFECTOS
-    }else if(eventSource=="ERC"){
-      ERC.updateState(eventValue);
+    }else if(eventSource=="EC"){
+      EC.updateState(eventValue);
     }
   }
 }

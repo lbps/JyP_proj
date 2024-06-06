@@ -5,8 +5,6 @@
 #include "buttonControl.h"
 #include "encoderControl.h"
 
-#pragma GCC diagnostic ignored "-pedantic"
-
 class controlsManager{
 private:
     eventsQueue _eventsQueue = eventsQueue(20);

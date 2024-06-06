@@ -17,11 +17,11 @@ void buttonControl::addNewButton(String buttonID, uint8_t pin, uint8_t pinMode, 
     }else{
         newButton.setPressedState(HIGH); 
     };
-    Serial.println("Se ha añadido nuevo boton");
+    Serial.println("addNewButton-> Se ha añadido nuevo boton"); //DEBUG
     _buttonArray[_numButtons]=newButton;
     _buttonIDsArray[_numButtons]=buttonID;
     _numButtons++;
-    Serial.println("_numButtons: "+String(_numButtons));
+    Serial.println("addNewButton-> _numButtons: "+String(_numButtons)); //DEBUG
 };
 
 void buttonControl::updateButtons (){
@@ -31,16 +31,17 @@ void buttonControl::updateButtons (){
         String buttonID = _buttonIDsArray[i];
         button_i->update();
         
-        String eventType="";
+        String eventValue="";
         if (button_i->pressed() ){
-            eventType="PR";
+            eventValue="DN";
         }else if(button_i->released()){
-            eventType="RL";
+            eventValue="UP";
         };
 
-        if (eventType!=""){
-            String eventJson_str = _eventsQueue->createSerializedEventJson(buttonID, eventType);
-            _eventsQueue->enqueueEvent(eventJson_str);
+        if (eventValue!=""){
+            String controlEvent = buttonID+"_"+eventValue;
+            Serial.println("updateButtons-> nuevo evento: "+controlEvent); //DEBUG
+            _eventsQueue->enqueueEvent(controlEvent);
         };
     };
 
