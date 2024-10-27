@@ -32,28 +32,32 @@ buttonState BW2 = buttonState(); //BOTON BLANCO 2
 buttonState BF2 = buttonState(); //BOTON NEGRO/FANTASIA 2
 buttonState BRE = buttonState(); //BOTON ENCODER ANILLO EXTERIOR
 buttonState BRI = buttonState(); //BOTON ENCODER ANILLO INTERIOR
-buttonState BRC = buttonState(); //BOTON ENCODER CONTROL EFECTOS
+buttonState BC = buttonState(); //BOTON ENCODER CONTROL EFECTOS
 encoderState ERE = encoderState(); //ENCODER ANILLO EXTERIOR
 encoderState ERI = encoderState(); //ENCODER ANILLO INTERIOR
 encoderState EC = encoderState(); //ENCODER CONTROL EFECTOS
 
 //INICIALIZACION DE TIRAS LED:
-ringLED ringE = ringLED(110, 27);
-ringLED ringI = ringLED(80, 26);
-ledStripBase letterLED_J = ledStripBase(16, 25);
-ledStripBase letterLED_Y = ledStripBase(6, 33);
-ledStripBase letterLED_P = ledStripBase(17, 32);
+ringLED ringE = ringLED(110, 26);
+ringLED ringI = ringLED(80, 27);
+ledStripBase letterLED_J = ledStripBase(16, 32);
+ledStripBase letterLED_Y = ledStripBase(6, 25);
+ledStripBase letterLED_P = ledStripBase(17, 33);
 
 //INICIALIZACION DE VARIABLES DE EFECTOS:
-
+uint8_t effectsEditionMode = 0;
+int8_t ringE_effectIdx = 0;
+int8_t ringI_effectIdx = 0;
+int8_t letters_effectIdx = 0;
 
 //DECLARACION DE FUNCIONES UTILIZADAS:
 void updateControlEvents();
 void updateControlStates();
 void updateLightEffects();
-void updateLightEffect_ringE(uint8_t effectIdx = 0);
-void updateLightEffect_ringI(uint8_t effectIdx = 0);
-void updateLightEffect_letters(uint8_t effectIdx = 0);
+void runLightEffects();
+void runLightEffect_ringE();
+void runLightEffect_ringI();
+void runLightEffect_letters();
 uint8_t getHueFromColorButtons (bool buttonsPressed[6]);
 
 void setup() {
@@ -107,8 +111,11 @@ void loop() {
   //Actualizacion de maquinas de estado de controles:
   updateControlStates();
 
-  //Actualizacion y ejecucion de efecto seleccionado:
+  //Actualizacion de efectos a visualizar
   updateLightEffects();
+
+  //Ejecucion de efectos seleccionados:
+  runLightEffects();
 
   //Actualizacion de visualizacion de cada tira:
   ringE.updateDisplay();
@@ -143,7 +150,7 @@ void updateControlStates(){
   BF2.updateState();
   BRE.updateState();
   BRI.updateState();
-  BRC.updateState();
+  BC.updateState();
   ERE.updateState();
   ERI.updateState();
   EC.updateState();
@@ -168,7 +175,7 @@ void updateControlStates(){
   bool prevEvent_BF2 = 0;
   bool prevEvent_BRE = 0;
   bool prevEvent_BRI = 0;
-  bool prevEvent_BRC = 0;
+  bool prevEvent_BC = 0;
 
 
   //Si hay eventos se actualiza el estado de los controles correspondientes:
@@ -257,10 +264,10 @@ void updateControlStates(){
       BRI.updateState(eventValue);
       prevEvent_BRI = 1;
     //*** BOTON ENCODER CONTROL EFECTOS
-    }else if(eventSource=="BRC"){
-      if(prevEvent_BRC) controlEventsQueue.enqueueEvent(eventSource);
-      BRC.updateState(eventValue);
-      prevEvent_BRC = 1;
+    }else if(eventSource=="BC"){
+      if(prevEvent_BC) controlEventsQueue.enqueueEvent(eventSource);
+      BC.updateState(eventValue);
+      prevEvent_BC = 1;
     //*** ENCODER ANILLO EXTERIOR
     }else if(eventSource=="ERE"){
       ERE.updateState(eventValue);
@@ -275,7 +282,154 @@ void updateControlStates(){
 }
 
 void updateLightEffects(){
+  //-------------------------------------------------------
+  // ACTUALIZACIÓN DE EFECTOS A VISUALIZAR
+  //-------------------------------------------------------
+  //Se actualiza el estado del modo edición de efectos
+  switch(effectsEditionMode){   
 
+    //Modo de no edicion
+    case 0: 
+      if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=1;
+      }
+      break;
+
+    //Modo de espera a soltar boton para comenzar edicion
+    //de efectos:
+    case 1:
+      if(BC.stateChanged() && BC.getCurrentState()==0){
+        effectsEditionMode=2;
+      }
+      break;
+
+    //Modo edicion de todos leds a la vez. 
+    case 2:
+
+      //Si se ha vuelto a pretar boton de control,
+      //se cabia de estado:
+      if(BC.stateChanged() && BC.getCurrentState()==1){
+        effectsEditionMode=3;
+
+      //Si se lleva pulsando el boton de control de efectos mas de un 
+      //segundo, se pasa a estado de no edicion:
+      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=0;
+
+      //Se comprueba si se ha modificado el encoder de control:
+      }else if(EC.stateChanged()){
+
+        int8_t increment = EC.getIncrement(true);
+        ringE_effectIdx+=increment;
+        ringI_effectIdx+=increment;
+        letters_effectIdx+=increment;  
+      }
+      
+      break;
+
+    //Modo edicion de los dos anillos. 
+    case 3:
+
+      //Si se ha vuelto a pretar boton de control,
+      //se cabia de estado:
+      if(BC.stateChanged() && BC.getCurrentState()==1){
+        effectsEditionMode=4;
+
+      //Si se lleva pulsando el boton de control de efectos mas de un 
+      //segundo, se pasa a estado de no edicion:
+      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=0;
+
+      //Se comprueba si se ha modificado el encoder de control:
+      }else if(EC.stateChanged()){
+
+        int8_t increment = EC.getIncrement(true);
+        ringE_effectIdx+=increment;
+        ringI_effectIdx+=increment;
+       }
+      
+      break;
+
+    //Modo edicion de anillo exterior. 
+    case 4:
+
+      //Si se ha vuelto a pretar boton de control,
+      //se cabia de estado:
+      if(BC.stateChanged() && BC.getCurrentState()==1){
+        effectsEditionMode=5;
+
+      //Si se lleva pulsando el boton de control de efectos mas de un 
+      //segundo, se pasa a estado de no edicion:
+      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=0;
+
+      //Se comprueba si se ha modificado el encoder de control:
+      }else if(EC.stateChanged()){
+        int8_t increment = EC.getIncrement(true);
+        ringE_effectIdx+=increment;
+      }
+      
+      break;
+
+    //Modo edicion de anillo interior. 
+    case 5:
+
+      //Si se ha vuelto a pretar boton de control,
+      //se cabia de estado:
+      if(BC.stateChanged() && BC.getCurrentState()==1){
+        effectsEditionMode=6;
+
+      //Si se lleva pulsando el boton de control de efectos mas de un 
+      //segundo, se pasa a estado de no edicion:
+      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=0;
+
+      //Se comprueba si se ha modificado el encoder de control:
+      }else if(EC.stateChanged()){
+        int8_t increment = EC.getIncrement(true);
+        ringI_effectIdx+=increment;
+      }
+      
+      break;
+
+    //Modo edicion de letras. 
+    case 6:
+
+      //Si se ha vuelto a pretar boton de control,
+      //se cabia de estado:
+      if(BC.stateChanged() && BC.getCurrentState()==1){
+        effectsEditionMode=2;
+
+      //Si se lleva pulsando el boton de control de efectos mas de un 
+      //segundo, se pasa a estado de no edicion:
+      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=0;
+
+      //Se comprueba si se ha modificado el encoder de control:
+      }else if(EC.stateChanged()){
+        int8_t increment = EC.getIncrement(true);
+        letters_effectIdx+=increment;
+      }
+      
+      break;
+
+    //En cualquier otro caso
+    default:
+        break;
+  }
+  //Se asegura que ninguno de los efectos se ha salido del rango:
+  if(ringE_effectIdx>9) ringE_effectIdx=0; else if (ringE_effectIdx<0) ringE_effectIdx=9;
+  if(ringI_effectIdx>9) ringI_effectIdx=0; else if (ringI_effectIdx<0) ringI_effectIdx=9;
+  if(letters_effectIdx>9) letters_effectIdx=0; else if (letters_effectIdx<0) letters_effectIdx=9;
+
+  return;
+}
+
+void runLightEffects () {
+  //-------------------------------------------------------
+  // EJECUCION DE EFECTOS A VISUALIZAR
+  //-------------------------------------------------------
+  
   //Actualizacion de valor de pixel anterior de cada tira:
   ringE.updatePreviousPixel();
   ringI.updatePreviousPixel();
@@ -283,24 +437,23 @@ void updateLightEffects(){
   letterLED_Y.updatePreviousPixel();
   letterLED_P.updatePreviousPixel();
 
-  //--------------------
+
   // ANILLO EXTERIOR
   //--------------------
-  updateLightEffect_ringE(2);
+  runLightEffect_ringE();
 
-  //--------------------
   // ANILLO INTERIOR
   //--------------------
-  updateLightEffect_ringI(0);
+  runLightEffect_ringI();
 
-  //---------
   // LETRAS
   //---------
-  updateLightEffect_letters(0);
+  runLightEffect_letters();
 
+  
 }
 
-void updateLightEffect_ringE(uint8_t effectIdx){
+void runLightEffect_ringE(){
 
   //-------------------------------------------------------
   // COMPROBACION DE BOTONES PARA MODO FLASH O CAMBIO COLOR
@@ -366,7 +519,7 @@ void updateLightEffect_ringE(uint8_t effectIdx){
   //------------------------
   // VISUALIZACION DE EFECTO
   //------------------------
-  switch (effectIdx){
+  switch (ringE_effectIdx){
     case 0:
       ringE.theaterChaseRainbowEffect(1,10,3,5);
       break;
@@ -406,7 +559,7 @@ void updateLightEffect_ringE(uint8_t effectIdx){
   return;   
 }
 
-void updateLightEffect_ringI(uint8_t effectIdx){
+void runLightEffect_ringI(){
 
   //-------------------------------------------------------
   // COMPROBACION DE BOTONES PARA MODO FLASH O CAMBIO COLOR
@@ -471,7 +624,7 @@ void updateLightEffect_ringI(uint8_t effectIdx){
   //------------------------
   // VISUALIZACION DE EFECTO
   //------------------------
-  switch (effectIdx){
+  switch (ringI_effectIdx){
     case 0:
       ringI.theaterChaseRainbowEffect(1,10,3,5);
       break;
@@ -511,7 +664,7 @@ void updateLightEffect_ringI(uint8_t effectIdx){
   return;   
 }
 
-void updateLightEffect_letters(uint8_t effectIdx){
+void runLightEffect_letters(){
 
   //-------------------------------------------------------
   // COMPROBACION DE BOTONES PARA MODO FLASH O CAMBIO COLOR
@@ -586,7 +739,7 @@ void updateLightEffect_letters(uint8_t effectIdx){
 
     //Si la pulsacion es de menos de 4 segundos, o no se esta en modo flash, 
     // se vuelve a color anterior al flash para que siga con efecto previo:
-    if(minTimeButtonPressed<4000 or effectIdx!=9){
+    if(minTimeButtonPressed<4000 or letters_effectIdx!=9){
       letterLED_J.setMainHue(prevMainHue_letterJ);
       letterLED_Y.setMainHue(prevMainHue_letterY);
       letterLED_P.setMainHue(prevMainHue_letterP);
@@ -603,7 +756,7 @@ void updateLightEffect_letters(uint8_t effectIdx){
   //------------------------
   // VISUALIZACION DE EFECTO
   //------------------------
-  switch (effectIdx){
+  switch (letters_effectIdx){
     case 0:
       letterLED_J.theaterChaseRainbowEffect(1,10,3,5);
       letterLED_Y.theaterChaseRainbowEffect(1,10,3,5);
@@ -640,10 +793,12 @@ void updateLightEffect_letters(uint8_t effectIdx){
       letterLED_P.colorWipeEffect(1, 1, 10);
       break;
     case 7:
+    case 8: //Se repite lo mismo que caso 7 (el 8 en los anillos es el de seguir el pixel principal)
       letterLED_J.rainbowEffect(1);
       letterLED_Y.rainbowEffect(1);
       letterLED_P.rainbowEffect(1);
       break;
+
     case 9:
 
       letterLED_J.flashEffect(0, 80);
@@ -656,7 +811,6 @@ void updateLightEffect_letters(uint8_t effectIdx){
 
   return;   
 }
-
 
 uint8_t getHueFromColorButtons (bool buttonsPressed[6]){
   //***buttonsPressed tiene que contener: {BRX, BGX, BBX, BYX, BWX, BFX}

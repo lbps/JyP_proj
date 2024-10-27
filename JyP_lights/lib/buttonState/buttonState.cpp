@@ -12,6 +12,10 @@ bool buttonState::getPrevState(){
 }
 
 void buttonState::updateState(String eventValue){
+
+    //Se actualiza el tiempo en estado actual:
+    _currentStateTime= millis()-_currentStateStartTime;
+
     //Se actualiza el estado anterior:
     _prevState=_currentState;
 
@@ -20,14 +24,19 @@ void buttonState::updateState(String eventValue){
 
     //Se actualiza el estado:
     if(eventValue=="UP"){
-        _currentState=1;
-    }else if(eventValue=="DN"){
         _currentState=0;
+    }else if(eventValue=="DN"){
+        _currentState=1; //estado es 1 cunado esta presionado el boton
     }
 
-    //Se actualiza el tiempo de inicio de estado actual:
+    //En caso de que se acabe de cambiar de estado:
     if(stateChanged()){
+        //Se actualiza info de estado previo: 
+        _prevStateTime=_currentStateTime; 
+
+        //se actualiza info de estado actual:
         _currentStateStartTime = millis();
+        _currentStateTime=0;
     }
     return;
 }
@@ -42,5 +51,10 @@ bool buttonState::stateChanged(){
 
 unsigned long buttonState::getTimeInCurrentState(){
     //Se devuelve el tiempo en milisegundos que ha pasado desde inicio de ultimo estado:
-    return millis()-_currentStateStartTime;
+    return _currentStateTime;
+}
+
+unsigned long buttonState::getTimeInPreviousState(){
+    //Se devuelve el tiempo en milisegundos que ha pasado desde inicio de ultimo estado:
+    return _prevStateTime;
 }

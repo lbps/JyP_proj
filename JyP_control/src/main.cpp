@@ -20,8 +20,8 @@ void setup()
     Serial.begin(9600);
     Serial.println("Inicio programa JyP_control");
 
-    controlsManager1.addNewButton("BR1", 22, INPUT_PULLUP, 10);
-    controlsManager1.addNewEncoder("ERE", 18,19);
+    controlsManager1.addNewButton("BW1", 26, INPUT_PULLUP, 10);
+    controlsManager1.addNewEncoder("ERE", 32,33);
 
     //Se inicializa el pin de conexion
     pinMode(disconnectionLedPin, OUTPUT); // Configura el pin del LED de la placacomo salida

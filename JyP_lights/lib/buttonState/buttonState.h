@@ -9,6 +9,9 @@ class buttonState
     bool _currentState = 0;
     bool _prevState = 0;
     unsigned long _currentStateStartTime = 0;
+    unsigned long _currentStateTime = 0;
+    unsigned long _prevStateTime = 0;
+
   public:
     buttonState();
 
@@ -17,6 +20,7 @@ class buttonState
     void updateState(String newState="");
     bool stateChanged();
     unsigned long getTimeInCurrentState();
+    unsigned long getTimeInPreviousState();
 };
 
 #endif
