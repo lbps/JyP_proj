@@ -1,6 +1,7 @@
 #include "controlsManager.h"
 
 controlsManager::controlsManager(){
+    
 };
 
 void controlsManager::addNewButton(String buttonID, uint8_t pin, uint8_t pinMode, uint16_t debounceInterval_ms){
@@ -11,9 +12,14 @@ void controlsManager::addNewEncoder(String encoderID, uint8_t pinCHA, uint8_t pi
     _encoderControl.addNewEncoder(encoderID, pinCHA, pinCHB);
 };
 
+void controlsManager::addNewPotentiometer(String potentiometerID, uint8_t pinAnalogInput, uint16_t maxAnalogReadValue){
+    _potentiometerControl.addNewPotentiometer(potentiometerID, pinAnalogInput, maxAnalogReadValue);
+};
+
 void controlsManager::updateControls(){
     _buttonControl.updateButtons();
     _encoderControl.updateEncoders();
+    _potentiometerControl.updatePotentiometers();
 };
 
 void controlsManager::sendEventsToSerial(Stream &serialport, unsigned long minEventSendingPeriod_us){
@@ -28,7 +34,7 @@ void controlsManager::sendEventsToSerial(Stream &serialport, unsigned long minEv
             String controlEvent = _eventsQueue.dequeueEvent();
             serialport.println(controlEvent);
             eventSent = 1;
-            Serial.println("Enviado evento: "+controlEvent);
+            // Serial.println("Enviado evento: "+controlEvent);
         };
 
         //Se actualiza el tiempo desde ulimo evento enviado:

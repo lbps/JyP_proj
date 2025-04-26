@@ -8,7 +8,7 @@ void encoderControl::addNewEncoder(String encoderID, uint8_t pinCHA, uint8_t pin
 
     Encoder *newEncoder = new Encoder(pinCHA, pinCHB);
 
-    Serial.println("Se ha añadido nuevo encoder");
+    Serial.println("Se ha añadido nuevo encoder: "+encoderID);
     _encoderArray[_numEncoders]=newEncoder;
     _encoderPosArray[_numEncoders]=0;
     _encoderIDsArray[_numEncoders]=encoderID;

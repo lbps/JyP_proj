@@ -8,8 +8,8 @@
 
 class buttonControl{
 private:
-    Bounce2::Button _buttonArray [10];
-    String _buttonIDsArray [10];
+    Bounce2::Button _buttonArray [30];
+    String _buttonIDsArray [30];
     uint8_t _numButtons = 0;
     eventsQueue *_eventsQueue;
 
