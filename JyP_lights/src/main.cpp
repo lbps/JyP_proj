@@ -922,6 +922,10 @@ uint8_t getHueFromColorButtons (bool buttonsPressed[6]){
     if(buttonsPressed[3]){
       newHue = 109; //Verde azulado
     }
+
+  //Si esta pulsado el amarillo:
+  }else if(buttonsPressed[3]){
+    newHue = 40; //Amarillo
   }
 
   return newHue;
