@@ -303,6 +303,9 @@ void updateLightEffects(){
   // ACTUALIZACIÓN DE EFECTOS A VISUALIZAR
   //-------------------------------------------------------
   uint8_t prevEffectsEditionMode = effectsEditionMode;
+  int8_t prev_ringE_effectIdx =ringE_effectIdx; 
+  int8_t prev_ringI_effectIdx =ringI_effectIdx; 
+  int8_t prev_letters_effectIdx =letters_effectIdx; 
 
   //Se actualiza el estado del modo edición de efectos
   switch(effectsEditionMode){   
@@ -453,17 +456,24 @@ void updateLightEffects(){
   }
 
   //Se asegura que ninguno de los efectos se ha salido del rango:
-  if(ringE_effectIdx>9) ringE_effectIdx=0; else if (ringE_effectIdx<0) ringE_effectIdx=9;
-  if(ringI_effectIdx>9) ringI_effectIdx=0; else if (ringI_effectIdx<0) ringI_effectIdx=9;
-  if(letters_effectIdx>9) letters_effectIdx=0; else if (letters_effectIdx<0) letters_effectIdx=9;
+  uint8_t numEffects = 10;
+  if(ringE_effectIdx>(numEffects-1)) ringE_effectIdx=0; else if (ringE_effectIdx<0) ringE_effectIdx=numEffects-1;
+  if(ringI_effectIdx>(numEffects-1)) ringI_effectIdx=0; else if (ringI_effectIdx<0) ringI_effectIdx=numEffects-1;
+  if(letters_effectIdx>(numEffects-1)) letters_effectIdx=0; else if (letters_effectIdx<0) letters_effectIdx=numEffects-1;
 
-  //Actualizacion de modo de edicion previo en caso de haber cambiado:
+  //Se saca por el log cuando ha cambiado modo edicion:
   if(prevEffectsEditionMode!=effectsEditionMode){
     //Se actualiza como estado previo el nuevo: 
     Serial.println("nuevo effectsEditionMode: "+String(effectsEditionMode)+"prevState: "+String(prevEffectsEditionMode));
-    prevEffectsEditionMode=effectsEditionMode;
-    
   }
+
+  //Se sacan logs de nuevo efecto por cada led:
+  if(prev_ringE_effectIdx!=ringE_effectIdx ||
+     prev_ringI_effectIdx!=ringI_effectIdx ||
+     prev_letters_effectIdx!=letters_effectIdx){
+      Serial.println("Nuevos efectos: RE: "+String(ringE_effectIdx)+"; RI: "+String(ringI_effectIdx)+"; LET: "+String(letters_effectIdx));
+  }
+  
 
   return;
 }
@@ -576,7 +586,7 @@ void runLightEffect_ringE(){
   //------------------------
   switch (ringE_effectIdx){
     case 0:
-      ringE.theaterChaseRainbowEffect(1,10,3,5);
+      ringE.theaterChaseRainbowEffect(0,1,3,3);
       break;
     case 1:
       ringE.theaterChaseEffect(1,0,10,3,5);
@@ -696,7 +706,7 @@ void runLightEffect_ringI(){
   //------------------------
   switch (ringI_effectIdx){
     case 0:
-      ringI.theaterChaseRainbowEffect(1,10,3,5);
+      ringI.theaterChaseRainbowEffect(1,2,3,3);
       break;
     case 1:
       ringI.theaterChaseEffect(1,0,10,3,5);
@@ -842,9 +852,9 @@ void runLightEffect_letters(){
   //------------------------
   switch (letters_effectIdx){
     case 0:
-      letterLED_J.theaterChaseRainbowEffect(1,10,3,5);
-      letterLED_Y.theaterChaseRainbowEffect(1,10,3,5);
-      letterLED_P.theaterChaseRainbowEffect(1,10,3,5);
+      letterLED_J.theaterChaseRainbowEffect(0,5,1,3);
+      letterLED_Y.theaterChaseRainbowEffect(0,2,0,4);
+      letterLED_P.theaterChaseRainbowEffect(1,5,1,3);
       break;
     case 1:
       letterLED_J.theaterChaseEffect(1,0,10,3,5);

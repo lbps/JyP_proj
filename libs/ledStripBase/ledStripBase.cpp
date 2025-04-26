@@ -217,60 +217,38 @@ void ledStripBase::theaterChaseEffect(bool forwardDir, bool autoColorChange, uin
   return;
 }
 
-void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequencesToChangeColor, uint16_t spaceBetweenLeds, uint16_t numAdjacentLedsOn){
-  //Se apagan todos los led.
-  clear();
-
+void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequencesToChangeColor, uint16_t spaceBetweenLeds, uint16_t numAdjacentLedsOn) {
   uint8_t deltaHue = 256 / numPixels();
-  
-  //Se pinta 1 un led de cada tres de la tira
-  if(forwardDir){
-    for (int i=(0+(_sequenceIdx%spaceBetweenLeds)); i<numPixels(); i+=spaceBetweenLeds){
 
-      //Se comprueba si hay que cambiar color:
-      if(_sequenceIdx>=numSequencesToChangeColor && _sequenceIdx%spaceBetweenLeds==0){ 
-        _sequenceIdx = 0;
+  // Cambiar color si toca, pero SIN reiniciar _sequenceIdx
+  if ((_sequenceIdx % numSequencesToChangeColor) == 0) {
+    _mainHue = (_mainHue + deltaHue) % 256;
+    _mainSat = 255;
+  }
 
-        _mainHue=_mainHue+deltaHue;
-        if(_mainHue>255) _mainHue=0+(_mainHue-256);
-        _mainSat=255;
-      };
+  // Limpiar la tira
+  for (int i = 0; i < numPixels(); i++) {
+    setPixelColor(i, 0);  // Apagado
+  }
 
-      //Se encienden todos los leds conjuntos necesarios: 
-      for (int j=0; j<numAdjacentLedsOn; j++){
-        if((i+j)>=numPixels()) break;
+  int patternLength = numAdjacentLedsOn + spaceBetweenLeds; // Longitud total de patrón
 
-        uint32_t pixelHue = _mainHue + (i+j)*deltaHue; 
-        if(pixelHue>255) pixelHue=256-pixelHue;
+  for (int base = 0; base < numPixels(); base++) {
+    int shiftedPos;
 
-        setPixelColor(i+j, ColorHSV(map8to16bit(_mainHue), _mainSat));
-      }
+    if (forwardDir) {
+      shiftedPos = (base + (_sequenceIdx % patternLength)) % patternLength;
+    } else {
+      shiftedPos = (base - (_sequenceIdx % patternLength) + patternLength) % patternLength;
     }
-  }else{
-    for (int i=((numPixels()-1-(_sequenceIdx%spaceBetweenLeds))); i>=0; i-=spaceBetweenLeds){
 
-      //Se comprueba si hay que cambiar color:
-      if(_sequenceIdx>=numSequencesToChangeColor && _sequenceIdx%spaceBetweenLeds==0){ 
-        _sequenceIdx = 0;
-
-        _mainHue=_mainHue-(deltaHue*spaceBetweenLeds);
-        if(_mainHue<0) _mainHue=256+_mainHue;
-        _mainSat=255;
-      };
-
-      //Se encienden todos los leds conjuntos necesarios: 
-      for (int j=0; j<numAdjacentLedsOn; j++){
-        if((i-j)<0) break;
-
-        uint32_t pixelHue = _mainHue + (i+j)*deltaHue; 
-        if(pixelHue>255) pixelHue=256-pixelHue;
-        
-        setPixelColor(i-j, ColorHSV(map8to16bit(_mainHue), _mainSat));
-      }
+    if (shiftedPos < numAdjacentLedsOn) {
+      uint32_t pixelHue = _mainHue + base * deltaHue;
+      pixelHue = pixelHue % 256;
+      setPixelColor(base, ColorHSV(map8to16bit(pixelHue), _mainSat));
     }
   }
 
-  //Se actualiza el numero de secuencia
   _sequenceIdx++;
 }
 
