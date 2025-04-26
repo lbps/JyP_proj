@@ -456,7 +456,7 @@ void updateLightEffects(){
   }
 
   //Se asegura que ninguno de los efectos se ha salido del rango:
-  uint8_t numEffects = 10;
+  uint8_t numEffects = 11;
   if(ringE_effectIdx>(numEffects-1)) ringE_effectIdx=0; else if (ringE_effectIdx<0) ringE_effectIdx=numEffects-1;
   if(ringI_effectIdx>(numEffects-1)) ringI_effectIdx=0; else if (ringI_effectIdx<0) ringI_effectIdx=numEffects-1;
   if(letters_effectIdx>(numEffects-1)) letters_effectIdx=0; else if (letters_effectIdx<0) letters_effectIdx=numEffects-1;
@@ -572,7 +572,7 @@ void runLightEffect_ringE(){
 
     //Si la pulsacion es de menos de 4 segundos se vuelve a color anterior al flash
     //para que siga con efecto previo:
-    if(minTimeButtonPressed<4000){
+    if(minTimeButtonPressed<2500){
       ringE.setMainHue(prevMainHue);
       ringE.setMainSat(prevMainSat);
     }
@@ -586,30 +586,33 @@ void runLightEffect_ringE(){
   //------------------------
   switch (ringE_effectIdx){
     case 0:
-      ringE.theaterChaseRainbowEffect(0,1,3,3);
+      ringE.sinusoidEffect(1, 0.35, 1);
       break;
     case 1:
-      ringE.theaterChaseEffect(1,0,10,3,5);
+      ringE.sinusoidEffect(1, 0.35, 0);
       break;
     case 2:
-      ringE.newKITTeffect(30, 1, 1);
+      ringE.theaterChaseRainbowEffect(0,1,3,3);
       break;
-    case 3: 
-      ringE.basicKITTeffect(30, 1, 1);
+    case 3:
+      ringE.theaterChaseEffect(0,0,1,3,3);
       break;
     case 4:
-      ringE.runningLightsEffect();
+      ringE.newKITTeffect(10, 1, 1);
       break;
-    case 5:
-      ringE.sparkleEffect(50);
+    case 5: 
+      ringE.basicKITTeffect(10, 1, 1);
       break;
     case 6:
-      ringE.colorWipeEffect(1, 1, 10);
+      ringE.sparkleEffect(8);
       break;
     case 7:
-      ringE.rainbowEffect(1);
+      ringE.colorWipeEffect(1, 1, 10);
       break;
     case 8:
+      ringE.rainbowEffect(1);
+      break;
+    case 9:
       //Se comprueba si hay evento del encoder de anillo exterior
       if(ERE.stateChanged()){
         //Se actualiza el pixel actual:
@@ -626,7 +629,7 @@ void runLightEffect_ringE(){
       //Se actualiza el efecto:
       ringE.followCurrentPixel(30);
       break;
-    case 9:
+    case 10:
       //El encendido del flash lo hara la gestino de botones presionado, durante visualizacion efecto
       //solo oscurece:
       ringE.flashEffect(0, 80);
@@ -691,7 +694,7 @@ void runLightEffect_ringI(){
 
     //Si la pulsacion es de menos de 4 segundos se vuelve a color anterior al flash
     //para que siga con efecto previo:
-    if(minTimeButtonPressed<4000){
+    if(minTimeButtonPressed<2500){
       ringI.setMainHue(prevMainHue);
       ringI.setMainSat(prevMainSat);
     }
@@ -706,30 +709,33 @@ void runLightEffect_ringI(){
   //------------------------
   switch (ringI_effectIdx){
     case 0:
-      ringI.theaterChaseRainbowEffect(1,2,3,3);
+      ringI.sinusoidEffect(0, 0.35, 1);
       break;
     case 1:
-      ringI.theaterChaseEffect(1,0,10,3,5);
+      ringI.sinusoidEffect(0, 0.35, 0);
       break;
     case 2:
-      ringI.newKITTeffect(30, 1, 1);
+      ringI.theaterChaseRainbowEffect(1,2,3,3);
       break;
-    case 3: 
-      ringI.basicKITTeffect(30, 1, 1);
+    case 3:
+      ringI.theaterChaseEffect(1,0,2,3,3);
       break;
     case 4:
-      ringI.runningLightsEffect();
+      ringI.newKITTeffect(7, 0, 1);
       break;
-    case 5:
-      ringI.sparkleEffect(50);
+    case 5: 
+      ringI.basicKITTeffect(7, 0, 1);
       break;
     case 6:
-      ringI.colorWipeEffect(1, 1, 10);
+      ringI.sparkleEffect(8);
       break;
     case 7:
-      ringI.rainbowEffect(1);
+      ringI.colorWipeEffect(1, 1, 10);
       break;
     case 8:
+      ringI.rainbowEffect(1);
+      break;
+    case 9:
     //Se comprueba si hay evento del encoder de anillo exterior
       if(ERI.stateChanged()){
         //Se actualiza el pixel actual:
@@ -746,7 +752,7 @@ void runLightEffect_ringI(){
       //Se actualiza el efecto:
       ringI.followCurrentPixel(30);
       break;
-    case 9:
+    case 10:
       //El encendido del flash lo hara la gestino de botones presionado, durante visualizacion efecto
       //solo oscurece:
       ringI.flashEffect(0, 80);
@@ -833,7 +839,7 @@ void runLightEffect_letters(){
 
     //Si la pulsacion es de menos de 4 segundos, o no se esta en modo flash, 
     // se vuelve a color anterior al flash para que siga con efecto previo:
-    if(minTimeButtonPressed<4000 or letters_effectIdx!=9){
+    if(minTimeButtonPressed<2500 or letters_effectIdx!=10){
       letterLED_J.setMainHue(prevMainHue_letterJ);
       letterLED_Y.setMainHue(prevMainHue_letterY);
       letterLED_P.setMainHue(prevMainHue_letterP);
@@ -852,48 +858,105 @@ void runLightEffect_letters(){
   //------------------------
   switch (letters_effectIdx){
     case 0:
+      //Se actualiza efecto
+      letterLED_J.sinusoidEffect(1, 0.5, 1);
+      letterLED_Y.sinusoidEffect(1, 0.5, 1);
+      letterLED_P.sinusoidEffect(0, 0.5, 1);
+      break;
+    case 1:
+      //Se pone a la J y la P el color del anillo exterior, 
+      //y a la Y el del anillo interior:
+      letterLED_J.setMainHue(ringE.getMainHue());
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainHue(ringI.getMainHue());
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainHue(ringE.getMainHue());
+      letterLED_P.setMainSat(255);
+
+      //Se actualiza efecto
+      letterLED_J.sinusoidEffect(1, 0.5, 0);
+      letterLED_Y.sinusoidEffect(1, 0.5, 0);
+      letterLED_P.sinusoidEffect(0, 0.5, 0);
+      break;
+    case 2:
       letterLED_J.theaterChaseRainbowEffect(0,5,1,3);
       letterLED_Y.theaterChaseRainbowEffect(0,2,0,4);
       letterLED_P.theaterChaseRainbowEffect(1,5,1,3);
       break;
-    case 1:
-      letterLED_J.theaterChaseEffect(1,0,10,3,5);
-      letterLED_Y.theaterChaseEffect(1,0,10,3,5);
-      letterLED_P.theaterChaseEffect(1,0,10,3,5);
-      break;
-    case 2:
-      letterLED_J.newKITTeffect(30, 1, 1);
-      letterLED_Y.newKITTeffect(30, 1, 1);
-      letterLED_P.newKITTeffect(30, 1, 1);
-      break;
-    case 3: 
-      letterLED_J.basicKITTeffect(30, 1, 1);
-      letterLED_Y.basicKITTeffect(30, 1, 1);
-      letterLED_P.basicKITTeffect(30, 1, 1);
+    case 3:
+      //Se pone a la J y la P el color del anillo exterior, 
+      //y a la Y el del anillo interior:
+      letterLED_J.setMainHue(ringE.getMainHue());
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainHue(ringI.getMainHue());
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainHue(ringE.getMainHue());
+      letterLED_P.setMainSat(255);
+
+      //Se actualiza efecto
+      letterLED_J.theaterChaseEffect(0,0,5,1,3);
+      letterLED_Y.theaterChaseEffect(0,0,2,0,4);
+      letterLED_P.theaterChaseEffect(1,0,5,1,3);
       break;
     case 4:
-      letterLED_J.runningLightsEffect();
-      letterLED_Y.runningLightsEffect();
-      letterLED_P.runningLightsEffect();
+      //Se pone a la J y la P el color del anillo exterior, 
+      //y a la Y el del anillo interior:
+      letterLED_J.setMainHue(ringE.getMainHue());
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainHue(ringI.getMainHue());
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainHue(ringE.getMainHue());
+      letterLED_P.setMainSat(255);
+
+      //Se actualiza efecto
+      letterLED_J.newKITTeffect(3, 1, 1);
+      letterLED_Y.newKITTeffect(2, 1, 1);
+      letterLED_P.newKITTeffect(3, 0, 1);
       break;
-    case 5:
-      letterLED_J.sparkleEffect(50);
-      letterLED_Y.sparkleEffect(50);
-      letterLED_P.sparkleEffect(50);
+    case 5: 
+
+      //Se pone a la J y la P el color del anillo exterior, 
+      //y a la Y el del anillo interior:
+      letterLED_J.setMainHue(ringE.getMainHue());
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainHue(ringI.getMainHue());
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainHue(ringE.getMainHue());
+      letterLED_P.setMainSat(255);
+
+      //Se actualiza efecto
+      letterLED_J.basicKITTeffect(3, 1, 0);
+      letterLED_Y.basicKITTeffect(2, 1, 0);
+      letterLED_P.basicKITTeffect(3, 0, 0);
       break;
     case 6:
+      //Se pone a la J y la P el color del anillo exterior, 
+      //y a la Y el del anillo interior:
+      letterLED_J.setMainHue(ringE.getMainHue());
+      letterLED_J.setMainSat(255);
+      letterLED_Y.setMainHue(ringI.getMainHue());
+      letterLED_Y.setMainSat(255);
+      letterLED_P.setMainHue(ringE.getMainHue());
+      letterLED_P.setMainSat(255);
+
+      //Se actualiza efecto
+      letterLED_J.sparkleEffect(5);
+      letterLED_Y.sparkleEffect(3);
+      letterLED_P.sparkleEffect(5);
+      break;
+    case 7:
       letterLED_J.colorWipeEffect(1, 1, 10);
       letterLED_Y.colorWipeEffect(1, 1, 10);
       letterLED_P.colorWipeEffect(1, 1, 10);
       break;
-    case 7:
-    case 8: //Se repite lo mismo que caso 7 (el 8 en los anillos es el de seguir el pixel principal)
+    case 8:
+    case 9: //Se repite lo mismo que caso 7 (el 8 en los anillos es el de seguir el pixel principal)
       letterLED_J.rainbowEffect(1);
       letterLED_Y.rainbowEffect(1);
       letterLED_P.rainbowEffect(1);
       break;
 
-    case 9:
+    case 10:
 
       letterLED_J.flashEffect(0, 80);
       letterLED_Y.flashEffect(0, 80);

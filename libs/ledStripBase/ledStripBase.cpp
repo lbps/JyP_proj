@@ -182,39 +182,35 @@ void ledStripBase::colorWipeEffect(bool randomColor, bool forwardDirection, uint
 
 void ledStripBase::theaterChaseEffect(bool forwardDir, bool autoColorChange, uint16_t numSequencesToChangeColor, uint16_t spaceBetweenLeds, uint16_t numAdjacentLedsOn){
 
-  //Se apagan todos los led.
-  clear();
-
-  //Se pinta 1 un led de cada tres de la tira
-  if(forwardDir){
-    for (int i=(0+(_sequenceIdx%spaceBetweenLeds)); i<numPixels(); i+=spaceBetweenLeds){
-      for (int j=0; j<numAdjacentLedsOn; j++){
-        if((i+j)>=numPixels()) break;
-        setPixelColor(i+j, ColorHSV(map8to16bit(_mainHue), _mainSat));
-      }
-    }
-  }else{
-    for (int i=((numPixels()-1-(_sequenceIdx%spaceBetweenLeds))); i>=0; i-=spaceBetweenLeds){
-      setPixelColor(i, ColorHSV(map8to16bit(_mainHue), _mainSat));
-      for (int j=0; j<numAdjacentLedsOn; j++){
-        if((i-j)<0) break;
-        setPixelColor(i-j, ColorHSV(map8to16bit(_mainHue), _mainSat));
-      }
-    }
-  }
-  
-  //Se actualiza el numero de secuencia
-  _sequenceIdx++;
-
-  //Se comprueba si hay que cambiar color automaticamente:
-  if(autoColorChange && _sequenceIdx>=numSequencesToChangeColor && _sequenceIdx%spaceBetweenLeds==0){ 
-    _sequenceIdx = 0;
-
+  // Cambiar color si toca, pero SIN reiniciar _sequenceIdx
+  if (autoColorChange && (_sequenceIdx % numSequencesToChangeColor) == 0) {
     _mainHue = random(255);
     _mainSat = 255;
-  };
-  
-  return;
+  }
+
+  // Limpiar la tira
+  for (int i = 0; i < numPixels(); i++) {
+    setPixelColor(i, 0);  // Apagado
+  }
+
+  int patternLength = numAdjacentLedsOn + spaceBetweenLeds; // Longitud total de patrón
+
+  for (int base = 0; base < numPixels(); base++) {
+    int shiftedPos;
+
+    if (forwardDir) {
+      shiftedPos = (base + (_sequenceIdx % patternLength)) % patternLength;
+    } else {
+      shiftedPos = (base - (_sequenceIdx % patternLength) + patternLength) % patternLength;
+    }
+
+    if (shiftedPos < numAdjacentLedsOn) {
+      _mainSat = 255;
+      setPixelColor(base, ColorHSV(map8to16bit(_mainHue), _mainSat));
+    }
+  }
+
+  _sequenceIdx++;
 }
 
 void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequencesToChangeColor, uint16_t spaceBetweenLeds, uint16_t numAdjacentLedsOn) {
@@ -252,45 +248,94 @@ void ledStripBase::theaterChaseRainbowEffect(bool forwardDir, uint16_t numSequen
   _sequenceIdx++;
 }
 
-void ledStripBase::sparkleEffect(uint16_t numLedsOn){
-  clear();
+void ledStripBase::sparkleEffect(uint16_t numLedsOn, uint8_t baseBrightness, uint8_t sparkleDecay) {
 
-  uint32_t color = ColorHSV(map8to16bit(_mainHue), _mainSat);
+  uint16_t H;
+  uint8_t S, V;
+
+  // Establecemos un brillo tenue en todos los LEDs
+  for(uint16_t i = 0; i < numPixels(); i++) {
+    rgbToHsv(getPixelColor(i), H, S, V);
+    V = max(baseBrightness, uint8_t(V * (1.0 - sparkleDecay / 255.0))); // Mantiene un brillo mínimo
+    setPixelColor(i, ColorHSV(map8to16bit(H), S, V));
+  }
+
+  // Seleccionamos LEDs aleatorios para que brillen más
   uint16_t pixel;
-
-  for(uint16_t i = 0; i<numLedsOn; i++){
+  for(uint16_t i = 0; i < numLedsOn; i++) {
     pixel = random(numPixels());
-    setPixelColor(pixel, color);
-  };
-  return;
+    uint8_t sparkleBrightness = random(baseBrightness + 50, 255); // Destellos más brillantes
+    setPixelColor(pixel, ColorHSV(map8to16bit(_mainHue), _mainSat, sparkleBrightness));
+  }
 }
 
-void ledStripBase::runningLightsEffect(bool forwardDirection){
+void ledStripBase::sinusoidEffect(
+  bool forwardDirection,
+  float waveLengthFactor,
+  bool rainbowMode,
+  uint8_t rainbowAdvanceSpeed,
+  float phaseOffset,
+  float minLevel,
+  float maxLevel,
+  float waveSharpness // 1.0 = onda normal, >1 más puntiaguda, <1 más redondeada
+) {
   uint32_t mainColor = ColorHSV(map8to16bit(_mainHue), _mainSat);
   int R = (mainColor >> 16) & 0xFF;
   int G = (mainColor >> 8) & 0xFF;
   int B = mainColor & 0xFF;
+
   float levelScale;
-  for(int i=0; i<numPixels(); i++) {
-    levelScale = (sin(i+_sequenceIdx) * 127.0 + 128.0)/255.0;
-    setPixelColor(i , uint8_t(R*levelScale), uint8_t(G*levelScale), uint8_t(B*levelScale));
-  }
+  uint8_t r, g, b;
   
-  if(forwardDirection){
-    _sequenceIdx--;
-
-    if(_sequenceIdx<0){
-      _sequenceIdx=numPixels();
+  for (int i = 0; i < numPixels(); i++) {
+    // Generar onda senoidal con fase y sharpness
+    float rawWave = sin(i * waveLengthFactor + _sequenceIdx * waveLengthFactor + phaseOffset);
+    rawWave = (rawWave * 0.5f) + 0.5f; // Normalizar de [-1,1] a [0,1]
+    
+    if (waveSharpness != 1.0f) {
+      rawWave = powf(rawWave, waveSharpness); // Aplicar forma
     }
-  }else{
-    _sequenceIdx++;
 
-    if(_sequenceIdx>(numPixels()*2)){
-      _sequenceIdx=0;
+    levelScale = minLevel + (maxLevel - minLevel) * rawWave;
+
+    if (rainbowMode) {
+      // Modo arcoíris
+      uint8_t pixelHue = _mainHue + (i * (256 / numPixels()));
+      uint32_t color = ColorHSV(map8to16bit(pixelHue), _mainSat);
+
+      r = ((color >> 16) & 0xFF) * levelScale;
+      g = ((color >> 8) & 0xFF) * levelScale;
+      b = (color & 0xFF) * levelScale;
+    } else {
+      // Color fijo
+      r = uint8_t(R * levelScale);
+      g = uint8_t(G * levelScale);
+      b = uint8_t(B * levelScale);
+    }
+
+    setPixelColor(i, r, g, b);
+  }
+
+  // Avance de la onda
+  if (forwardDirection) {
+    _sequenceIdx--;
+    if (_sequenceIdx < 0) {
+      _sequenceIdx = numPixels() * 5;
+    }
+  } else {
+    _sequenceIdx++;
+    if (_sequenceIdx > numPixels() * 5) {
+      _sequenceIdx = 0;
     }
   }
 
-  return;
+  // Avance del arcoíris si está activado
+  if (rainbowMode && rainbowAdvanceSpeed > 0) {
+    _mainHue += rainbowAdvanceSpeed;
+    if (_mainHue >= 256) {
+      _mainHue -= 256;
+    }
+  }
 }
 
 void ledStripBase::fadeDarkPixel(uint16_t pixelIdx, uint8_t fadeStep){

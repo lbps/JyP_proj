@@ -73,9 +73,9 @@ public:
    
     void theaterChaseRainbowEffect(bool forwardDir = 1, uint16_t numSequencesToChangeColor = 10, uint16_t spaceBetweenLeds = 3, uint16_t numAdjacentLedsOn = 1);
     
-    void sparkleEffect(uint16_t numLedsOn = 1); 
+    void sparkleEffect(uint16_t numLedsOn = 1, uint8_t baseBrightness = 50, uint8_t sparkleDecay = 225); 
 
-    void runningLightsEffect(bool forwardDirection = 1);
+    void sinusoidEffect(bool forwardDirection = 1,  float waveLengthFactor = 0.5, bool rainbowMode = false, uint8_t rainbowAdvanceSpeed = 1, float phaseOffset = 0, float minLevel =0.1, float maxLevel=1.0, float waveSharpness= 1.0);
 
     void basicKITTeffect(uint16_t lightTrailSize = 4, bool initialForwardDirection = 1, bool meteorTrailEffect = 0);
 
