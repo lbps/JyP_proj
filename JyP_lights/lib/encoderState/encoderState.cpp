@@ -24,12 +24,13 @@ int16_t encoderState::getIncrement(bool unitary){
     return increment;
 }
 
-void encoderState::updateState(String eventValue){
+void encoderState::updateState(String eventValue, unsigned long minTimeBetweenUpdates_ms){
     //Se actualiza el estado anterior:
     _prevPosition=_currentPosition;
 
     //Si no hay ningun evento nuevo de control se sale:
-    if(eventValue.length()==0) return;
+    unsigned long timeSinceLastEvent =millis() - _currentPosStartTime; 
+    if(eventValue.length()==0 or timeSinceLastEvent<minTimeBetweenUpdates_ms) return;
 
     //Se actualiza el estado:
     if(eventValue=="CW"){

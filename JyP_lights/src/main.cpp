@@ -280,7 +280,7 @@ void updateControlStates(){
       ERI.updateState(eventValue);
     //*** ENCODER CONTROL EFECTOS
     }else if(eventSource=="EC"){
-      EC.updateState(eventValue);
+      EC.updateState(eventValue, 200);
     //*** POTENCIOMETRO INTENSIDAD
     }else if(eventSource=="P1"){
       intensityValue=uint8_t(eventValue.toInt()*255.0/100.0);
@@ -319,6 +319,11 @@ void updateLightEffects(){
     case 1:
       if(BC.stateChanged() && BC.getCurrentState()==0){
         effectsEditionMode=2;
+
+        //Se igualan los efectos para que todos los led comiencen en el mismo efecto:
+        ringI_effectIdx=ringE_effectIdx;
+        letters_effectIdx=ringE_effectIdx;
+
       }
       break;
 
@@ -329,6 +334,9 @@ void updateLightEffects(){
       //se cabia de estado:
       if(BC.stateChanged() && BC.getCurrentState()==1){
         effectsEditionMode=3;
+
+        //Se igualan los efectos de los dos anillos para que sea el mismo efecto:
+        ringI_effectIdx=ringE_effectIdx;
 
       //Si se lleva pulsando el boton de control de efectos mas de un 
       //segundo, se pasa a estado de no edicion:

@@ -15,7 +15,7 @@ class encoderState
     int16_t getCurrentPosition();
     int16_t getPrevPosition();
     int16_t getIncrement(bool unitary = 0);
-    void updateState(String newState="");
+    void updateState(String eventValue="", unsigned long minTimeBetweenUpdates_ms=0);
     bool stateChanged();
     unsigned long getTimeInCurrentState();
 };
