@@ -40,7 +40,7 @@ void setup()
     controlsManager1.addNewButton("BC", 2, INPUT_PULLUP, 10);
     controlsManager1.addNewEncoder("ERE", 19,21);
     controlsManager1.addNewEncoder("ERI", 5,18);
-    controlsManager1.addNewEncoder("EC", 17,16);
+    controlsManager1.addNewEncoder("EC", 16,17);
     // controlsManager1.addNewPotentiometer("P1", 32);
     // controlsManager1.addNewPotentiometer("P2", 33);
 

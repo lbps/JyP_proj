@@ -132,7 +132,7 @@ void loop() {
 void updateControlEvents(){
   while (SerialBT.available()){
     String controlEvent = SerialBT.readNextData();
-    Serial.println("Nuevo evento recibido: "+controlEvent);
+    // Serial.println("Nuevo evento recibido: "+controlEvent);
     controlEventsQueue.enqueueEvent(controlEvent);
   }
 }
@@ -302,9 +302,9 @@ void updateLightEffects(){
   //-------------------------------------------------------
   // ACTUALIZACIÓN DE EFECTOS A VISUALIZAR
   //-------------------------------------------------------
-  //Se actualiza el estado del modo edición de efectos
   uint8_t prevEffectsEditionMode = effectsEditionMode;
 
+  //Se actualiza el estado del modo edición de efectos
   switch(effectsEditionMode){   
 
     //Modo de no edicion
@@ -314,34 +314,41 @@ void updateLightEffects(){
       }
       break;
 
-    //Modo de espera a soltar boton para comenzar edicion
-    //de efectos:
+    //Modo de espera a soltar boton para comenzar modo edicion de efectos:
     case 1:
+
       if(BC.stateChanged() && BC.getCurrentState()==0){
-        effectsEditionMode=2;
+          effectsEditionMode=3;
 
-        //Se igualan los efectos para que todos los led comiencen en el mismo efecto:
-        ringI_effectIdx=ringE_effectIdx;
-        letters_effectIdx=ringE_effectIdx;
+          //Se igualan los efectos para que todos los led comiencen en el mismo efecto:
+          ringI_effectIdx=ringE_effectIdx;
+          letters_effectIdx=ringE_effectIdx;
+      }
+      break;
 
+    //Modo de espera a soltar boton para finalizar modo edicion de efectos:
+    case 2:
+
+      if(BC.stateChanged() && BC.getCurrentState()==0){
+          effectsEditionMode=0;
       }
       break;
 
     //Modo edicion de todos leds a la vez. 
-    case 2:
+    case 3:
 
       //Si se ha vuelto a pretar boton de control,
       //se cabia de estado:
       if(BC.stateChanged() && BC.getCurrentState()==1){
-        effectsEditionMode=3;
+        effectsEditionMode=4;
 
         //Se igualan los efectos de los dos anillos para que sea el mismo efecto:
         ringI_effectIdx=ringE_effectIdx;
 
       //Si se lleva pulsando el boton de control de efectos mas de un 
-      //segundo, se pasa a estado de no edicion:
+      //segundo, se pasa a estado espera a suelta de boton
       }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
-        effectsEditionMode=0;
+        effectsEditionMode=2;
 
       //Se comprueba si se ha modificado el encoder de control:
       }else if(EC.stateChanged()){
@@ -355,17 +362,17 @@ void updateLightEffects(){
       break;
 
     //Modo edicion de los dos anillos. 
-    case 3:
+    case 4:
 
       //Si se ha vuelto a pretar boton de control,
       //se cabia de estado:
       if(BC.stateChanged() && BC.getCurrentState()==1){
-        effectsEditionMode=4;
+        effectsEditionMode=5;
 
       //Si se lleva pulsando el boton de control de efectos mas de un 
       //segundo, se pasa a estado de no edicion:
       }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
-        effectsEditionMode=0;
+        effectsEditionMode=2;
 
       //Se comprueba si se ha modificado el encoder de control:
       }else if(EC.stateChanged()){
@@ -378,27 +385,6 @@ void updateLightEffects(){
       break;
 
     //Modo edicion de anillo exterior. 
-    case 4:
-
-      //Si se ha vuelto a pretar boton de control,
-      //se cabia de estado:
-      if(BC.stateChanged() && BC.getCurrentState()==1){
-        effectsEditionMode=5;
-
-      //Si se lleva pulsando el boton de control de efectos mas de un 
-      //segundo, se pasa a estado de no edicion:
-      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
-        effectsEditionMode=0;
-
-      //Se comprueba si se ha modificado el encoder de control:
-      }else if(EC.stateChanged()){
-        int8_t increment = EC.getIncrement(true);
-        ringE_effectIdx+=increment;
-      }
-      
-      break;
-
-    //Modo edicion de anillo interior. 
     case 5:
 
       //Si se ha vuelto a pretar boton de control,
@@ -409,7 +395,28 @@ void updateLightEffects(){
       //Si se lleva pulsando el boton de control de efectos mas de un 
       //segundo, se pasa a estado de no edicion:
       }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
-        effectsEditionMode=0;
+        effectsEditionMode=2;
+
+      //Se comprueba si se ha modificado el encoder de control:
+      }else if(EC.stateChanged()){
+        int8_t increment = EC.getIncrement(true);
+        ringE_effectIdx+=increment;
+      }
+      
+      break;
+
+    //Modo edicion de anillo interior. 
+    case 6:
+
+      //Si se ha vuelto a pretar boton de control,
+      //se cabia de estado:
+      if(BC.stateChanged() && BC.getCurrentState()==1){
+        effectsEditionMode=7;
+
+      //Si se lleva pulsando el boton de control de efectos mas de un 
+      //segundo, se pasa a estado de no edicion:
+      }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
+        effectsEditionMode=2;
 
       //Se comprueba si se ha modificado el encoder de control:
       }else if(EC.stateChanged()){
@@ -420,17 +427,17 @@ void updateLightEffects(){
       break;
 
     //Modo edicion de letras. 
-    case 6:
+    case 7:
 
       //Si se ha vuelto a pretar boton de control,
       //se cabia de estado:
       if(BC.stateChanged() && BC.getCurrentState()==1){
-        effectsEditionMode=2;
+        effectsEditionMode=3;
 
       //Si se lleva pulsando el boton de control de efectos mas de un 
       //segundo, se pasa a estado de no edicion:
       }else if(BC.getCurrentState()==1 && BC.getTimeInCurrentState()>1000){
-        effectsEditionMode=0;
+        effectsEditionMode=2;
 
       //Se comprueba si se ha modificado el encoder de control:
       }else if(EC.stateChanged()){
@@ -445,14 +452,18 @@ void updateLightEffects(){
         break;
   }
 
-  if(prevEffectsEditionMode!=effectsEditionMode){
-    Serial.println("nuevo effectsEditionMode: "+String(effectsEditionMode));
-  }
-  
   //Se asegura que ninguno de los efectos se ha salido del rango:
   if(ringE_effectIdx>9) ringE_effectIdx=0; else if (ringE_effectIdx<0) ringE_effectIdx=9;
   if(ringI_effectIdx>9) ringI_effectIdx=0; else if (ringI_effectIdx<0) ringI_effectIdx=9;
   if(letters_effectIdx>9) letters_effectIdx=0; else if (letters_effectIdx<0) letters_effectIdx=9;
+
+  //Actualizacion de modo de edicion previo en caso de haber cambiado:
+  if(prevEffectsEditionMode!=effectsEditionMode){
+    //Se actualiza como estado previo el nuevo: 
+    Serial.println("nuevo effectsEditionMode: "+String(effectsEditionMode)+"prevState: "+String(prevEffectsEditionMode));
+    prevEffectsEditionMode=effectsEditionMode;
+    
+  }
 
   return;
 }
