@@ -34,10 +34,10 @@ buttonState BRE = buttonState(); //BOTON ENCODER ANILLO EXTERIOR
 buttonState BRI = buttonState(); //BOTON ENCODER ANILLO INTERIOR
 buttonState BC = buttonState(); //BOTON ENCODER CONTROL EFECTOS
 encoderState ERE = encoderState(); //ENCODER ANILLO EXTERIOR
-encoderState ERI = encoderState(); //ENCODER ANILLO INTERIOR
-encoderState EC = encoderState(); //ENCODER CONTROL EFECTOS
+encoderState ERI = encoderState(2); //ENCODER ANILLO INTERIOR
+encoderState EC = encoderState(4); //ENCODER CONTROL EFECTOS
 uint8_t intensityValue = 100; 
-uint8_t speedEfectValue = 50; 
+uint8_t speedEfectValue = 100; 
 
 
 //INICIALIZACION DE TIRAS LED:
@@ -111,7 +111,7 @@ void loop() {
 
   //Recopilacion de nuevos eventos BT de control:
   updateControlEvents();
-
+  
   //Actualizacion de maquinas de estado de controles:
   updateControlStates();
 
@@ -162,7 +162,7 @@ void updateControlStates(){
   //Si no hay nuevos eventos de control se sale:
   if(!controlEventsQueue.eventsAvailable()) return;
 
-  //Inicializamos los booleanos de evento registrado de los botones, ya que si hay mas 
+  //Inicializamos los booleanos de evento registrado, ya que si hay mas 
   //de un evento de un mismo boton en la cola no queremos que un segundo evento machaque
   //el estado del primero ya que perderiamos el primer evento:
   bool prevEvent_BR1 = 0;
@@ -180,14 +180,16 @@ void updateControlStates(){
   bool prevEvent_BRE = 0;
   bool prevEvent_BRI = 0;
   bool prevEvent_BC = 0;
-
+  bool prevEvent_ERE = 0;
+  bool prevEvent_ERI = 0;
+  bool prevEvent_EC = 0;
 
   //Si hay eventos se actualiza el estado de los controles correspondientes:
   uint16_t numEvents = controlEventsQueue.getNumEvents();
   for (int i=0; i<numEvents; i++){
     //Se obtiene nuevo evento de control:
     String newEvent = controlEventsQueue.dequeueEvent();
-    // Serial.println(newEvent);
+    // Serial.println("newEvent: "+newEvent);
 
     //Se divide la fuente del evento y el valor del evento:
     int splitPos = newEvent.indexOf('_');
@@ -199,88 +201,145 @@ void updateControlStates(){
     //Se actualiza la maquina de estados de los controles:
     //*** BOTON ROJO 1
     if(eventSource=="BR1"){
-      if(prevEvent_BR1) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BR1) controlEventsQueue.enqueueEvent(newEvent);
       BR1.updateState(eventValue);
       prevEvent_BR1 = 1;
     //*** BOTON VERDE 1
     }else if(eventSource=="BG1"){
-      if(prevEvent_BG1) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BG1){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BG1.updateState(eventValue);
       prevEvent_BG1 = 1;
     //*** BOTON AZUL 1
     }else if(eventSource=="BB1"){
-      if(prevEvent_BB1) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BB1){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BB1.updateState(eventValue);
       prevEvent_BB1 = 1;
     //*** BOTON AMARILLO 1
     }else if(eventSource=="BY1"){
-      if(prevEvent_BY1) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BY1){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BY1.updateState(eventValue);
       prevEvent_BY1 = 1;
     //*** BOTON BLANCO 1
     }else if(eventSource=="BW1"){
-      if(prevEvent_BW1) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BW1){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BW1.updateState(eventValue);
       prevEvent_BW1 = 1;
     //*** BOTON NEGRO/FANTASIA 1
     }else if(eventSource=="BF1"){
-      if(prevEvent_BF1) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BF1){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BF1.updateState(eventValue);
       prevEvent_BF1 = 1;
     //*** BOTON ROJO 2
     }else if(eventSource=="BR2"){
-      if(prevEvent_BR2) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BR2){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BR2.updateState(eventValue);
       prevEvent_BR2 = 1;
     //*** BOTON VERDE 2
     }else if(eventSource=="BG2"){
-      if(prevEvent_BG2) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BG2){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BG2.updateState(eventValue);
       prevEvent_BG2 = 1;
     //*** BOTON AZUL 2
     }else if(eventSource=="BB2"){
-      if(prevEvent_BB2) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BB2){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BB2.updateState(eventValue);
       prevEvent_BB2 = 1;
     //*** BOTON AMARILLO 2
     }else if(eventSource=="BY2"){
-      if(prevEvent_BY2) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BY2){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BY2.updateState(eventValue);
       prevEvent_BY2 = 1;
     //*** BOTON BLANCO 2
     }else if(eventSource=="BW2"){
-      if(prevEvent_BW2) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BW2){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BW2.updateState(eventValue);
       prevEvent_BW2 = 1;
     //*** BOTON NEGRO/FANTASIA 2
     }else if(eventSource=="BF2"){
-      if(prevEvent_BF2) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BF2){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BF2.updateState(eventValue);
       prevEvent_BF2 = 1;
     //*** BOTON ENCODER ANILLO EXTERIOR
     }else if(eventSource=="BRE"){
-      if(prevEvent_BRE) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BRE){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BRE.updateState(eventValue);
       prevEvent_BRE = 1;
     //*** BOTON ENCODER ANILLO INTERIOR
     }else if(eventSource=="BRI"){
-      if(prevEvent_BRI) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BRI){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BRI.updateState(eventValue);
       prevEvent_BRI = 1;
     //*** BOTON ENCODER CONTROL EFECTOS
     }else if(eventSource=="BC"){
-      if(prevEvent_BC) controlEventsQueue.enqueueEvent(eventSource);
+      if(prevEvent_BC){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       BC.updateState(eventValue);
       prevEvent_BC = 1;
     //*** ENCODER ANILLO EXTERIOR
     }else if(eventSource=="ERE"){
+      if(prevEvent_ERE){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       ERE.updateState(eventValue);
+      prevEvent_ERE = 1;
     //*** ENCODER ANILLO INTERIOR
     }else if(eventSource=="ERI"){
+      if(prevEvent_ERI){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
       ERI.updateState(eventValue);
+      prevEvent_ERI = 1;
     //*** ENCODER CONTROL EFECTOS
     }else if(eventSource=="EC"){
-      EC.updateState(eventValue, 200);
+      if(prevEvent_EC){
+        controlEventsQueue.enqueueEvent(newEvent);
+        continue;
+      }
+      EC.updateState(eventValue);
+      prevEvent_EC = 1;
     //*** POTENCIOMETRO INTENSIDAD
     }else if(eventSource=="P1"){
       intensityValue=uint8_t(eventValue.toInt()*255.0/100.0);
@@ -481,13 +540,17 @@ void updateLightEffects(){
 void runLightEffects () {
 
   //Se comprueba si se ha cumplido con el tiempo de actualizacion segun la velocidad especificada:
-  unsigned long maxUpdatePeriod_ms = 100;
+  unsigned long maxUpdatePeriod_ms = 20;
   unsigned long updatePeriod = maxUpdatePeriod_ms - ((speedEfectValue/100.0)*maxUpdatePeriod_ms);
   unsigned long elapsedTimeSinceUpdate = millis() - lastUpdateTime; 
-  
+
+  //Se actualiza el valor de pixel a seguir independientemente de si se realiaz actualizacion o no:
+  if(ERE.stateChanged()){
+
+  }
+
   //En caso de haber cumplido con el tiempo de actualizacion, se actualiza los efectos:
   if(elapsedTimeSinceUpdate>=updatePeriod){
-    
     //-------------------------------------------------------
     // EJECUCION DE EFECTOS A VISUALIZAR
     //-------------------------------------------------------
@@ -581,6 +644,7 @@ void runLightEffect_ringE(){
     return; 
   }
 
+  //Se comprueba si hay evento del encoder de anillo exterior
   //------------------------
   // VISUALIZACION DE EFECTO
   //------------------------
@@ -610,20 +674,22 @@ void runLightEffect_ringE(){
       ringE.colorWipeEffect(1, 1, 10);
       break;
     case 8:
-      ringE.rainbowEffect(1);
+      ringE.rainbowEffect(3, 1);
       break;
     case 9:
       //Se comprueba si hay evento del encoder de anillo exterior
       if(ERE.stateChanged()){
         //Se actualiza el pixel actual:
-        int8_t increment = ERE.getIncrement(true);
+        int8_t increment = ERE.getIncrement(false);
         int16_t currentPixel = ringE.getCurrentPixel();
-        currentPixel += increment;
+        // Serial.println("ERE currentPixel: "+String(currentPixel)+"increment: "+String(increment));
+        currentPixel += increment*2;
         if(currentPixel>ringE.numPixels()){
           currentPixel=0;
         }else if(currentPixel<0){
           currentPixel=ringE.numPixels()-1;
         }
+        ringE.setCurrentPixel(currentPixel);
       }
       
       //Se actualiza el efecto:
@@ -730,10 +796,10 @@ void runLightEffect_ringI(){
       ringI.sparkleEffect(8);
       break;
     case 7:
-      ringI.colorWipeEffect(1, 1, 10);
+      ringI.colorWipeEffect(1, 0, 10);
       break;
     case 8:
-      ringI.rainbowEffect(1);
+      ringI.rainbowEffect(3, 0);
       break;
     case 9:
     //Se comprueba si hay evento del encoder de anillo exterior
@@ -945,15 +1011,15 @@ void runLightEffect_letters(){
       letterLED_P.sparkleEffect(5);
       break;
     case 7:
-      letterLED_J.colorWipeEffect(1, 1, 10);
-      letterLED_Y.colorWipeEffect(1, 1, 10);
-      letterLED_P.colorWipeEffect(1, 1, 10);
+      letterLED_J.colorWipeEffect(1, 1, 5);
+      letterLED_Y.colorWipeEffect(1, 1, 5);
+      letterLED_P.colorWipeEffect(1, 0, 5);
       break;
     case 8:
     case 9: //Se repite lo mismo que caso 7 (el 8 en los anillos es el de seguir el pixel principal)
-      letterLED_J.rainbowEffect(1);
-      letterLED_Y.rainbowEffect(1);
-      letterLED_P.rainbowEffect(1);
+      letterLED_J.rainbowEffect(3, 1);
+      letterLED_Y.rainbowEffect(3, 1);
+      letterLED_P.rainbowEffect(3, 0);
       break;
 
     case 10:

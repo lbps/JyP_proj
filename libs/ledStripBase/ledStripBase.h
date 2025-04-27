@@ -65,7 +65,7 @@ public:
 
     void flashEffect(bool newFlash, uint8_t fadeSpeed = 80); 
 
-    void rainbowEffect(uint8_t colorStep = 1);
+    void rainbowEffect(uint8_t colorStep = 1, bool forwardDirection = false);
 
     void colorWipeEffect(bool randomColor = 1, bool forwardDirection = 1, uint8_t colorStep = 1);
 

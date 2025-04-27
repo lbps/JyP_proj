@@ -139,12 +139,23 @@ void ledStripBase::setSequenceIdx(uint16_t newSequenceIdx){
   return;
 }
 
-void ledStripBase::rainbowEffect(uint8_t colorStep) {
+void ledStripBase::rainbowEffect(uint8_t colorStep, bool forwardDirection) {
   rainbow(map8to16bit(_mainHue));
-  if(colorStep<1) colorStep=1;
-  if(colorStep>10) colorStep=10;
-  _mainHue+=colorStep;
-  _mainSat=255;
+  
+  if (colorStep < 1) colorStep = 1;
+  if (colorStep > 10) colorStep = 10;
+
+  if (forwardDirection) {
+    _mainHue += colorStep;
+    if (_mainHue >= 256) _mainHue -= 256;
+  } else {
+    if (_mainHue < colorStep) {
+      _mainHue += 256;  // Evita que _mainHue sea negativo
+    }
+    _mainHue -= colorStep;
+  }
+  
+  _mainSat = 255;
   return;
 }
 
@@ -157,6 +168,7 @@ void ledStripBase::colorWipeEffect(bool randomColor, bool forwardDirection, uint
       _mainSat=255;
     }else{ 
       _mainHue+=colorStep;
+      _mainSat=255;
     }
   }
 
@@ -408,7 +420,6 @@ void ledStripBase::flashEffect(bool newFlash, uint8_t fadeSpeed){
 
 void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection, bool meteorTrailEffect){
 
-  //Se inicializa el effecto:
   if(_firstEffectSequence){
     _sequenceIdx=0;
     if(initialForwardDirection){
@@ -419,38 +430,39 @@ void ledStripBase::basicKITTeffect(uint16_t lightTrailSize, bool initialForwardD
     _firstEffectSequence=0;
   }
 
-  //Se oscurecen todos los pixels para crear estela
   uint8_t fadeStep=255/lightTrailSize;
   if(!meteorTrailEffect){
     fadeDarkAll(fadeStep);
   }else{
-    for(int i=0;i<(numPixels()); i++){
+    for(int i=0; i<numPixels(); i++){
       if(random(10)>3){
         fadeDarkPixel(i, uint8_t(fadeStep/1.5));
       }
     }
   }
-  
-  //Secuencias pares se va pasando el pixel principal adelante hasta llegar al final y pasar de secuencia:
-  if(_sequenceIdx%2==0){
-    if(_currentPixel<numPixels()){
-      _currentPixel++;
-    }else{
-      _sequenceIdx++;
-    };
 
-  //Secuencias impares se va pasando el pixel principal atras hasta llegar al final y pasar de secuencia:
-  }else{
-    if(_currentPixel>0){
+  // Movimiento de la cabeza
+  if(_sequenceIdx%2==0){ // Hacia adelante
+    _currentPixel++;
+    if(_currentPixel >= numPixels()){
+      _currentPixel = numPixels()-1;
+      _sequenceIdx++;
+    }
+  }else{ // Hacia atrás
+    if(_currentPixel > 0){
       _currentPixel--;
     }else{
+      _currentPixel = 0;
       _sequenceIdx++;
-    };
+    }
   }
 
-  //Se enciende a maxima intensidad el pixel principal:
-  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue), _mainSat));
+  // Protección extra: nos aseguramos que esté en rango siempre
+  if(_currentPixel < 0) _currentPixel = 0;
+  if(_currentPixel >= numPixels()) _currentPixel = numPixels()-1;
 
+  // Encender el pixel principal
+  setPixelColor(_currentPixel, ColorHSV(map8to16bit(_mainHue), _mainSat));
 }
 
 void ledStripBase::newKITTeffect(uint16_t lightTrailSize, bool initialForwardDirection, bool meteorTrailEffect){
