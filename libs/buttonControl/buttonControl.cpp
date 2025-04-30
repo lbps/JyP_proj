@@ -17,11 +17,11 @@ void buttonControl::addNewButton(String buttonID, uint8_t pin, uint8_t pinMode, 
     }else{
         newButton.setPressedState(HIGH); 
     };
-    Serial.println("addNewButton-> Se ha añadido nuevo boton"); //DEBUG
+    // Serial.println("addNewButton-> Se ha añadido nuevo boton"); //DEBUG
     _buttonArray[_numButtons]=newButton;
     _buttonIDsArray[_numButtons]=buttonID;
     _numButtons++;
-    Serial.println("addNewButton-> _numButtons: "+String(_numButtons)); //DEBUG
+    // Serial.println("addNewButton-> _numButtons: "+String(_numButtons)); //DEBUG
 };
 
 void buttonControl::updateButtons (){
@@ -40,7 +40,7 @@ void buttonControl::updateButtons (){
 
         if (eventValue!=""){
             String controlEvent = buttonID+"_"+eventValue;
-            Serial.println("updateButtons-> nuevo evento: "+controlEvent); //DEBUG
+            // Serial.println("updateButtons-> nuevo evento: "+controlEvent); //DEBUG
             _eventsQueue->enqueueEvent(controlEvent);
         };
     };

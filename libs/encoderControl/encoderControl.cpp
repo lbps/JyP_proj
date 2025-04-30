@@ -8,12 +8,12 @@ void encoderControl::addNewEncoder(String encoderID, uint8_t pinCHA, uint8_t pin
 
     Encoder *newEncoder = new Encoder(pinCHA, pinCHB);
 
-    Serial.println("Se ha añadido nuevo encoder: "+encoderID);
+    // Serial.println("Se ha añadido nuevo encoder: "+encoderID);
     _encoderArray[_numEncoders]=newEncoder;
     _encoderPosArray[_numEncoders]=0;
     _encoderIDsArray[_numEncoders]=encoderID;
     _numEncoders++;
-    Serial.println("_numEncoders: "+String(_numEncoders));
+    // Serial.println("_numEncoders: "+String(_numEncoders));
 };
 
 void encoderControl::updateEncoders (){
@@ -39,7 +39,7 @@ void encoderControl::updateEncoders (){
         
         if (eventValue!=""){
             String controlEvent = encoderID+"_"+eventValue;
-            Serial.println("updateEncoders-> nuevo evento: "+controlEvent); //DEBUG
+            // Serial.println("updateEncoders-> nuevo evento: "+controlEvent); //DEBUG
             _eventsQueue->enqueueEvent(controlEvent);
         };
     };

@@ -8,16 +8,16 @@ void potentiometerControl::addNewPotentiometer(String potentiometerID, uint8_t p
     
     pinMode(pinAnalogInput, INPUT);
 
-    Serial.println("Se ha añadido nuevo potenciometro: "+potentiometerID);
+    // Serial.println("Se ha añadido nuevo potenciometro: "+potentiometerID);
     _pinAnalogInputArray[_numPotentiometers]=pinAnalogInput;
     _maxAnalogReadValueArray[_numPotentiometers]=maxAnalogReadValue;
     _potentiometerIDsArray[_numPotentiometers]=potentiometerID;
     _potentiometerValueArray[_numPotentiometers]=255; //se inicializa con valor nulo al que no va a llegar nunca (ya que max es 100 que es en %)
     _numPotentiometers++;
-    Serial.println("_numPotentiometers: "+String(_numPotentiometers));
+    // Serial.println("_numPotentiometers: "+String(_numPotentiometers));
 };
 
-void potentiometerControl::updatePotentiometers (){
+void potentiometerControl::updatePotentiometers (uint8_t minDiffToEvent){
     
     for (int i=0; i<(_numPotentiometers); i++){
         uint8_t pinAnalogInput = _pinAnalogInputArray[i];
@@ -29,7 +29,7 @@ void potentiometerControl::updatePotentiometers (){
 
         String eventValue="";
         uint8_t diffValue = abs(newPotentiometerValue-prevPotentiometerValue);
-        if(diffValue>0 && (newPotentiometerValue == 0 || newPotentiometerValue==100 || diffValue>5)){
+        if(diffValue>0 && (newPotentiometerValue == 0 || newPotentiometerValue==100 || diffValue>=minDiffToEvent)){
             // Serial.println("prevPotentiometerValue: "+String(prevPotentiometerValues)); //DEBUG
             // Serial.println("newPotentiometerValue: "+String(newPotentiometerValue)); //DEBUG
             
@@ -41,7 +41,7 @@ void potentiometerControl::updatePotentiometers (){
         
         if (eventValue!=""){
             String controlEvent = potentiometerID+"_"+eventValue;
-            Serial.println("updatePotentiometers-> nuevo evento: "+controlEvent); //DEBUG
+            // Serial.println("updatePotentiometers-> nuevo evento: "+controlEvent); //DEBUG
             _eventsQueue->enqueueEvent(controlEvent);
         };
     };

@@ -19,7 +19,7 @@ void controlsManager::addNewPotentiometer(String potentiometerID, uint8_t pinAna
 void controlsManager::updateControls(){
     _buttonControl.updateButtons();
     _encoderControl.updateEncoders();
-    _potentiometerControl.updatePotentiometers();
+    _potentiometerControl.updatePotentiometers(5);
 };
 
 void controlsManager::sendEventsToSerial(Stream &serialport, unsigned long minEventSendingPeriod_us){

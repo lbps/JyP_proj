@@ -16,7 +16,7 @@ private:
 public:
     potentiometerControl (eventsQueue *eventsQueue1);
     void addNewPotentiometer(String potentiometerID, uint8_t pinAnalogInput, uint16_t maxAnalogReadValue = 4095);
-    void updatePotentiometers ();
+    void updatePotentiometers (uint8_t minDiffToEvent = 5);
 };
 
 #endif

@@ -34,10 +34,10 @@ buttonState BRE = buttonState(); //BOTON ENCODER ANILLO EXTERIOR
 buttonState BRI = buttonState(); //BOTON ENCODER ANILLO INTERIOR
 buttonState BC = buttonState(); //BOTON ENCODER CONTROL EFECTOS
 encoderState ERE = encoderState(); //ENCODER ANILLO EXTERIOR
-encoderState ERI = encoderState(2); //ENCODER ANILLO INTERIOR
+encoderState ERI = encoderState(); //ENCODER ANILLO INTERIOR
 encoderState EC = encoderState(4); //ENCODER CONTROL EFECTOS
-uint8_t intensityValue = 100; 
-uint8_t speedEfectValue = 100; 
+uint8_t intensityValue = 80; 
+uint8_t speedEfectValue = 65; 
 
 
 //INICIALIZACION DE TIRAS LED:
@@ -132,7 +132,7 @@ void loop() {
 void updateControlEvents(){
   while (SerialBT.available()){
     String controlEvent = SerialBT.readNextData();
-    // Serial.println("Nuevo evento recibido: "+controlEvent);
+    // Serial.println("nEv: "+controlEvent);
     controlEventsQueue.enqueueEvent(controlEvent);
   }
 }
@@ -523,14 +523,14 @@ void updateLightEffects(){
   //Se saca por el log cuando ha cambiado modo edicion:
   if(prevEffectsEditionMode!=effectsEditionMode){
     //Se actualiza como estado previo el nuevo: 
-    Serial.println("nuevo effectsEditionMode: "+String(effectsEditionMode)+"prevState: "+String(prevEffectsEditionMode));
+    // Serial.println("nuevo effectsEditionMode: "+String(effectsEditionMode)+"prevState: "+String(prevEffectsEditionMode));
   }
 
   //Se sacan logs de nuevo efecto por cada led:
   if(prev_ringE_effectIdx!=ringE_effectIdx ||
      prev_ringI_effectIdx!=ringI_effectIdx ||
      prev_letters_effectIdx!=letters_effectIdx){
-      Serial.println("Nuevos efectos: RE: "+String(ringE_effectIdx)+"; RI: "+String(ringI_effectIdx)+"; LET: "+String(letters_effectIdx));
+      // Serial.println("Nuevos efectos: RE: "+String(ringE_effectIdx)+"; RI: "+String(ringI_effectIdx)+"; LET: "+String(letters_effectIdx));
   }
   
 
@@ -539,15 +539,42 @@ void updateLightEffects(){
 
 void runLightEffects () {
 
-  //Se comprueba si se ha cumplido con el tiempo de actualizacion segun la velocidad especificada:
-  unsigned long maxUpdatePeriod_ms = 20;
-  unsigned long updatePeriod = maxUpdatePeriod_ms - ((speedEfectValue/100.0)*maxUpdatePeriod_ms);
-  unsigned long elapsedTimeSinceUpdate = millis() - lastUpdateTime; 
-
-  //Se actualiza el valor de pixel a seguir independientemente de si se realiaz actualizacion o no:
-  if(ERE.stateChanged()){
-
+  //Se actualizan las cosas que no necesitan retardos de actualizacion
+  // - Se comprueba si hay evento del encoder de anillo exterior
+  if(ringE_effectIdx==9 && ERE.stateChanged()){
+    //Se actualiza el pixel actual:
+    int8_t increment = ERE.getIncrement(false);
+    int16_t currentPixel = ringE.getCurrentPixel();
+    // Serial.println("ERE currentPixel: "+String(currentPixel)+"increment: "+String(increment));
+    currentPixel += int8_t(double(increment)*2.0);
+    if(currentPixel>ringE.numPixels()){
+      currentPixel=0;
+    }else if(currentPixel<0){
+      currentPixel=ringE.numPixels()-1;
+    }
+    ringE.setCurrentPixel(currentPixel);
   }
+
+  // - Se comprueba si hay evento del encoder de anillo interior
+  //Se comprueba si hay evento del encoder de anillo exterior
+  if(ringI_effectIdx==9 && ERI.stateChanged()){
+    //Se actualiza el pixel actual:
+    int8_t increment = ERI.getIncrement(false);
+    int16_t currentPixel = ringI.getCurrentPixel();
+    // Serial.println("ERE currentPixel: "+String(currentPixel)+"increment: "+String(increment));
+    currentPixel += int8_t(double(increment)*2.0);
+    if(currentPixel>ringI.numPixels()){
+      currentPixel=0;
+    }else if(currentPixel<0){
+      currentPixel=ringI.numPixels()-1;
+    }
+    ringI.setCurrentPixel(currentPixel);
+  }
+
+  //Se comprueba si se ha cumplido con el tiempo de actualizacion segun la velocidad especificada:
+  unsigned long maxUpdatePeriod_ms = 90;
+  unsigned long updatePeriod = ulong(maxUpdatePeriod_ms*(1.0-(double(speedEfectValue)/100.0)));
+  unsigned long elapsedTimeSinceUpdate = millis() - lastUpdateTime; 
 
   //En caso de haber cumplido con el tiempo de actualizacion, se actualiza los efectos:
   if(elapsedTimeSinceUpdate>=updatePeriod){
@@ -555,8 +582,12 @@ void runLightEffects () {
     // EJECUCION DE EFECTOS A VISUALIZAR
     //-------------------------------------------------------
     //Actualizacion de valor de pixel anterior de cada tira:
-    ringE.updatePreviousPixel();
-    ringI.updatePreviousPixel();
+    if(ringE_effectIdx!=9){
+      ringE.updatePreviousPixel();
+    }
+    if(ringE_effectIdx!=9){
+      ringI.updatePreviousPixel();
+    }
     letterLED_J.updatePreviousPixel();
     letterLED_Y.updatePreviousPixel();
     letterLED_P.updatePreviousPixel();
@@ -677,22 +708,6 @@ void runLightEffect_ringE(){
       ringE.rainbowEffect(3, 1);
       break;
     case 9:
-      //Se comprueba si hay evento del encoder de anillo exterior
-      if(ERE.stateChanged()){
-        //Se actualiza el pixel actual:
-        int8_t increment = ERE.getIncrement(false);
-        int16_t currentPixel = ringE.getCurrentPixel();
-        // Serial.println("ERE currentPixel: "+String(currentPixel)+"increment: "+String(increment));
-        currentPixel += increment*2;
-        if(currentPixel>ringE.numPixels()){
-          currentPixel=0;
-        }else if(currentPixel<0){
-          currentPixel=ringE.numPixels()-1;
-        }
-        ringE.setCurrentPixel(currentPixel);
-      }
-      
-      //Se actualiza el efecto:
       ringE.followCurrentPixel(30);
       break;
     case 10:
@@ -801,21 +816,7 @@ void runLightEffect_ringI(){
     case 8:
       ringI.rainbowEffect(3, 0);
       break;
-    case 9:
-    //Se comprueba si hay evento del encoder de anillo exterior
-      if(ERI.stateChanged()){
-        //Se actualiza el pixel actual:
-        int8_t increment = ERI.getIncrement(true);
-        int16_t currentPixel = ringI.getCurrentPixel();
-        currentPixel += increment;
-        if(currentPixel>ringI.numPixels()){
-          currentPixel=0;
-        }else if(currentPixel<0){
-          currentPixel=ringI.numPixels()-1;
-        }
-      }
-      
-      //Se actualiza el efecto:
+    case 9:     
       ringI.followCurrentPixel(30);
       break;
     case 10:
